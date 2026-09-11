@@ -6,13 +6,13 @@
 <title>CRM de Ventas</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=Great+Vibes&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
 <style>
   :root{
     --bg:#F4F3EE; --surface:#FFFFFF; --surface-2:#FBFAF6;
     --ink:#1A2A26; --muted:#6A7772; --faint:#95A09B;
     --border:#E4E1D8; --border-strong:#D4D0C4;
-    --primary:#0F6E5C; --primary-deep:#0A4E42; --primary-soft:#E4F0EC;
+    --primary:#B26A15; --primary-deep:#8A4F0C; --primary-soft:#F4E7CF;
     --gold:#B4822A; --gold-soft:#F5ECD9;
     --hot:#C0432E; --hot-soft:#F7E4DF;
     --warm:#B77F17; --warm-soft:#F6EBD4;
@@ -24,31 +24,31 @@
   }
   @media (prefers-color-scheme: dark){
     :root:not([data-theme="light"]){
-      --bg:#0E1513; --surface:#15201C; --surface-2:#111A17;
-      --ink:#E9EFEB; --muted:#93A29B; --faint:#6D7B75;
-      --border:#26332E; --border-strong:#33433C;
-      --primary:#3FB79E; --primary-deep:#2A8C77; --primary-soft:#152B25;
-      --gold:#DDA94C; --gold-soft:#2A2415;
-      --hot:#E17862; --hot-soft:#2E1A16;
-      --warm:#DDA94C; --warm-soft:#2A2415;
-      --cold:#6BA3D4; --cold-soft:#15222E;
-      --won:#4FB183; --lost:#6D7B75;
-      --shadow:0 1px 2px rgba(0,0,0,.3),0 4px 16px rgba(0,0,0,.35);
-      --shadow-lg:0 8px 40px rgba(0,0,0,.5);
+      --bg:#0A0705; --surface:#151009; --surface-2:#100C07;
+      --ink:#F6EEE0; --muted:#A99883; --faint:#6E6252;
+      --border:#2C2318; --border-strong:#3C3122;
+      --primary:#EBA33E; --primary-deep:#C07E22; --primary-soft:#2A1E0E;
+      --gold:#E4B84E; --gold-soft:#2A2211;
+      --hot:#E4573A; --hot-soft:#2E1811;
+      --warm:#E8913C; --warm-soft:#2C1E10;
+      --cold:#5FA0D6; --cold-soft:#122231;
+      --won:#54B487; --lost:#7A6E5C;
+      --shadow:0 1px 2px rgba(0,0,0,.4),0 4px 16px rgba(0,0,0,.45);
+      --shadow-lg:0 8px 40px rgba(0,0,0,.6);
     }
   }
   :root[data-theme="dark"]{
-    --bg:#0E1513; --surface:#15201C; --surface-2:#111A17;
-    --ink:#E9EFEB; --muted:#93A29B; --faint:#6D7B75;
-    --border:#26332E; --border-strong:#33433C;
-    --primary:#3FB79E; --primary-deep:#2A8C77; --primary-soft:#152B25;
-    --gold:#DDA94C; --gold-soft:#2A2415;
-    --hot:#E17862; --hot-soft:#2E1A16;
-    --warm:#DDA94C; --warm-soft:#2A2415;
-    --cold:#6BA3D4; --cold-soft:#15222E;
-    --won:#4FB183; --lost:#6D7B75;
-    --shadow:0 1px 2px rgba(0,0,0,.3),0 4px 16px rgba(0,0,0,.35);
-    --shadow-lg:0 8px 40px rgba(0,0,0,.5);
+    --bg:#0A0705; --surface:#151009; --surface-2:#100C07;
+    --ink:#F6EEE0; --muted:#A99883; --faint:#6E6252;
+    --border:#2C2318; --border-strong:#3C3122;
+    --primary:#EBA33E; --primary-deep:#C07E22; --primary-soft:#2A1E0E;
+    --gold:#E4B84E; --gold-soft:#2A2211;
+    --hot:#E4573A; --hot-soft:#2E1811;
+    --warm:#E8913C; --warm-soft:#2C1E10;
+    --cold:#5FA0D6; --cold-soft:#122231;
+    --won:#54B487; --lost:#7A6E5C;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 4px 16px rgba(0,0,0,.45);
+    --shadow-lg:0 8px 40px rgba(0,0,0,.6);
   }
 
   *{box-sizing:border-box}
@@ -92,8 +92,8 @@
   .kpi .lbl{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:600;display:flex;align-items:center;gap:6px}
   .kpi .val{font-family:"Archivo";font-weight:700;font-size:25px;margin-top:6px;line-height:1}
   .kpi .sub{font-size:11.5px;color:var(--faint);margin-top:5px}
-  .kpi.accent{background:linear-gradient(150deg,var(--primary),var(--primary-deep));border-color:transparent;color:#fff}
-  .kpi.accent .lbl,.kpi.accent .sub{color:rgba(255,255,255,.8)}
+  .kpi.accent{border-color:var(--primary);box-shadow:0 0 0 1px var(--primary),0 0 34px -10px var(--primary),var(--shadow)}
+  .kpi.accent .val{color:var(--primary)}
   .dot{width:8px;height:8px;border-radius:50%;flex:none}
 
   .grid2{display:grid;grid-template-columns:1.15fr .85fr;gap:16px;margin-bottom:16px}
@@ -202,7 +202,8 @@
   .toast.show{transform:translateX(-50%) translateY(0)}
 
   /* Login / setup */
-  .gate{position:fixed;inset:0;z-index:90;background:var(--bg);display:grid;place-items:center;padding:20px}
+  .gate{position:fixed;inset:0;z-index:90;color:#F6EEE0;display:grid;place-items:center;padding:24px;
+    background:radial-gradient(1100px 560px at 50% -6%, rgba(235,150,46,.16), transparent 60%), #070504}
   .card{background:var(--surface);border:1px solid var(--border);border-radius:16px;box-shadow:var(--shadow-lg);
     width:min(400px,100%);padding:30px 28px}
   .card .logo{margin:0 auto 16px}
@@ -220,6 +221,32 @@
   .spin{width:26px;height:26px;border:3px solid var(--border);border-top-color:var(--primary);border-radius:50%;
     animation:sp 1s linear infinite}
   @keyframes sp{to{transform:rotate(360deg)}}
+
+  /* Login con cover */
+  .login-wrap{display:flex;align-items:center;justify-content:center;gap:40px;max-width:860px;width:100%;flex-wrap:wrap}
+  .cover-panel{flex:none;width:300px;max-width:80vw}
+  .cover{width:100%;border-radius:14px;display:block;
+    box-shadow:0 0 0 1px rgba(255,255,255,.06),0 24px 60px rgba(0,0,0,.6),0 0 70px rgba(235,150,46,.22)}
+  .cover-fallback{width:100%;aspect-ratio:452/662;border-radius:14px;display:flex;flex-direction:column;justify-content:flex-end;
+    padding:26px 24px;background:radial-gradient(120% 80% at 62% 22%, rgba(240,160,55,.55), rgba(120,60,10,.18) 45%, #050403 76%);
+    box-shadow:0 0 0 1px rgba(255,255,255,.06),0 24px 60px rgba(0,0,0,.6),0 0 70px rgba(235,150,46,.22)}
+  .cover-fallback .by{font-size:15px;font-weight:600;color:#F6EEE0;letter-spacing:.02em;margin-bottom:2px}
+  .cover-fallback .emp{font-family:"Great Vibes",cursive;font-size:58px;line-height:.85;color:#FBF3E7}
+  .cover-fallback .sales{font-family:"Great Vibes",cursive;font-size:44px;line-height:.9;color:#EBA33E;margin-top:-2px}
+  .login-card2{flex:1 1 300px;min-width:260px;max-width:360px;background:#120D08;border:1px solid #2C2318;border-radius:16px;
+    padding:30px 28px;box-shadow:0 24px 60px rgba(0,0,0,.55)}
+  .login-card2 h2{font-size:23px;color:#F6EEE0}
+  .login-card2 .lead{color:#A99883;font-size:13.5px;margin:6px 0 22px}
+  .login-card2 .field{margin-bottom:14px}
+  .login-card2 .field label{display:block;font-size:12.5px;font-weight:600;color:#A99883;margin-bottom:5px}
+  .login-card2 .field input{width:100%;padding:11px 12px;border:1px solid #3A2F20;border-radius:9px;background:#0C0906;color:#F6EEE0}
+  .login-card2 .field input:focus{border-color:#EBA33E;outline:2px solid rgba(235,163,62,.35);outline-offset:1px}
+  .login-btn{width:100%;justify-content:center;display:inline-flex;align-items:center;gap:7px;padding:12px;border-radius:10px;
+    border:none;font-weight:700;font-size:14.5px;color:#1E1408;cursor:pointer;background:linear-gradient(135deg,#F0AE4A,#C0781E);margin-top:8px}
+  .login-btn:hover{filter:brightness(1.06)}
+  .login-btn:disabled{opacity:.6;cursor:default}
+  .gate-err2{background:#2E1811;color:#EC9A80;border:1px solid #5A2F20;border-radius:8px;padding:10px 12px;font-size:13px;margin-bottom:14px;font-weight:500}
+  @media (max-width:560px){.cover-panel{width:200px}.cover-fallback .emp{font-size:44px}.cover-fallback .sales{font-size:34px}}
 
   @media (max-width:900px){.kpis{grid-template-columns:repeat(2,1fr)}.grid2{grid-template-columns:1fr}}
   @media (max-width:560px){.wrap{padding:16px 14px 70px}.kpis{grid-template-columns:1fr 1fr}.brand p{display:none}}
@@ -377,14 +404,24 @@ function showSetup(){
 
 function showLogin(err){
   $("#app").hidden=true; $("#gate").hidden=false;
-  $("#gate").innerHTML=`<div class="card">
-    <div class="logo">CR</div>
-    <h2>${CFG.marca||"CRM de Ventas"}</h2>
-    <p class="lead">Inicia sesión para acceder al CRM del equipo</p>
-    ${err?`<div class="gate-err">${esc(err)}</div>`:""}
-    <div class="field"><label>Correo</label><input id="li_email" type="email" autocomplete="username" placeholder="tucorreo@empresa.com"></div>
-    <div class="field"><label>Contraseña</label><input id="li_pass" type="password" autocomplete="current-password" placeholder="••••••••"></div>
-    <button class="btn primary" id="li_btn">Entrar</button>
+  $("#gate").innerHTML=`<div class="login-wrap">
+    <div class="cover-panel">
+      <img class="cover" src="portada.png" alt="Empowering Sales — By Alejandro Medina"
+           onerror="this.style.display='none';this.nextElementSibling.hidden=false">
+      <div class="cover-fallback" hidden>
+        <div class="by">By Alejandro Medina</div>
+        <div class="emp">Empowering</div>
+        <div class="sales">Sales</div>
+      </div>
+    </div>
+    <div class="login-card2">
+      <h2>Bienvenido</h2>
+      <p class="lead">Inicia sesión para acceder al CRM del equipo</p>
+      ${err?`<div class="gate-err2">${esc(err)}</div>`:""}
+      <div class="field"><label>Correo</label><input id="li_email" type="email" autocomplete="username" placeholder="tucorreo@empresa.com"></div>
+      <div class="field"><label>Contraseña</label><input id="li_pass" type="password" autocomplete="current-password" placeholder="••••••••"></div>
+      <button class="login-btn" id="li_btn">Entrar</button>
+    </div>
   </div>`;
   $("#li_btn").onclick=doLogin;
   $("#li_pass").addEventListener("keydown",e=>{if(e.key==="Enter")doLogin();});
@@ -693,7 +730,7 @@ function exportCSV(){
 /* ---------- Toast / tema ---------- */
 let toastT;
 function toast(msg){const t=$("#toast");t.textContent=msg;t.classList.add("show");clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove("show"),2600);}
-function applyTheme(){let s;try{s=localStorage.getItem("crm_theme")}catch(e){}if(s)document.documentElement.setAttribute("data-theme",s);}
+function applyTheme(){let s;try{s=localStorage.getItem("crm_theme")}catch(e){}document.documentElement.setAttribute("data-theme",s||"dark");}
 
 /* ---------- Eventos ---------- */
 $("#themeBtn").onclick=()=>{
