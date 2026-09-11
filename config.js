@@ -15,5 +15,5 @@ window.CRM_CONFIG = {
   anonKey: "sb_publishable_qkcFmuy3pP9vQffaOrlYkw_wKyzgw09",
 
   // Nombre que se muestra arriba en la app (opcional)
-  marca: "CRM de Ventas"
+  marca: "EMPOWERING SALES"
 };
