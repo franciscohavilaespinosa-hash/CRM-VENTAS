@@ -1,0 +1,717 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CRM de Ventas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+  :root{
+    --bg:#F4F3EE; --surface:#FFFFFF; --surface-2:#FBFAF6;
+    --ink:#1A2A26; --muted:#6A7772; --faint:#95A09B;
+    --border:#E4E1D8; --border-strong:#D4D0C4;
+    --primary:#0F6E5C; --primary-deep:#0A4E42; --primary-soft:#E4F0EC;
+    --gold:#B4822A; --gold-soft:#F5ECD9;
+    --hot:#C0432E; --hot-soft:#F7E4DF;
+    --warm:#B77F17; --warm-soft:#F6EBD4;
+    --cold:#3E7CB1; --cold-soft:#E2ECF4;
+    --won:#2E7D5B; --lost:#8A8A82;
+    --shadow:0 1px 2px rgba(26,42,38,.04),0 4px 16px rgba(26,42,38,.06);
+    --shadow-lg:0 8px 40px rgba(26,42,38,.16);
+    --r:12px; --r-sm:8px;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#0E1513; --surface:#15201C; --surface-2:#111A17;
+      --ink:#E9EFEB; --muted:#93A29B; --faint:#6D7B75;
+      --border:#26332E; --border-strong:#33433C;
+      --primary:#3FB79E; --primary-deep:#2A8C77; --primary-soft:#152B25;
+      --gold:#DDA94C; --gold-soft:#2A2415;
+      --hot:#E17862; --hot-soft:#2E1A16;
+      --warm:#DDA94C; --warm-soft:#2A2415;
+      --cold:#6BA3D4; --cold-soft:#15222E;
+      --won:#4FB183; --lost:#6D7B75;
+      --shadow:0 1px 2px rgba(0,0,0,.3),0 4px 16px rgba(0,0,0,.35);
+      --shadow-lg:0 8px 40px rgba(0,0,0,.5);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#0E1513; --surface:#15201C; --surface-2:#111A17;
+    --ink:#E9EFEB; --muted:#93A29B; --faint:#6D7B75;
+    --border:#26332E; --border-strong:#33433C;
+    --primary:#3FB79E; --primary-deep:#2A8C77; --primary-soft:#152B25;
+    --gold:#DDA94C; --gold-soft:#2A2415;
+    --hot:#E17862; --hot-soft:#2E1A16;
+    --warm:#DDA94C; --warm-soft:#2A2415;
+    --cold:#6BA3D4; --cold-soft:#15222E;
+    --won:#4FB183; --lost:#6D7B75;
+    --shadow:0 1px 2px rgba(0,0,0,.3),0 4px 16px rgba(0,0,0,.35);
+    --shadow-lg:0 8px 40px rgba(0,0,0,.5);
+  }
+
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{background:var(--bg);color:var(--ink);font-family:"IBM Plex Sans",system-ui,sans-serif;
+    -webkit-font-smoothing:antialiased;line-height:1.5}
+  img{max-width:100%}
+  h1,h2,h3{font-family:"Archivo",system-ui,sans-serif;margin:0;letter-spacing:-.01em;text-wrap:balance}
+  .mono{font-family:"IBM Plex Mono",ui-monospace,monospace;font-variant-numeric:tabular-nums}
+  button{font-family:inherit;cursor:pointer}
+  input,select,textarea{font-family:inherit;font-size:14px;color:var(--ink)}
+  ::placeholder{color:var(--faint)}
+  :focus-visible{outline:2px solid var(--primary);outline-offset:2px;border-radius:4px}
+  [hidden]{display:none!important}
+
+  .wrap{max-width:1240px;margin:0 auto;padding:22px 22px 80px}
+
+  .top{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:22px}
+  .brand{display:flex;align-items:center;gap:12px;margin-right:auto}
+  .logo{width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,var(--primary),var(--primary-deep));
+    display:grid;place-items:center;color:#fff;font-family:"Archivo";font-weight:800;font-size:19px;flex:none}
+  .brand h1{font-size:20px;font-weight:700;line-height:1.1}
+  .brand p{margin:1px 0 0;font-size:12px;color:var(--muted)}
+  .btn{border:1px solid var(--border-strong);background:var(--surface);color:var(--ink);
+    padding:9px 14px;border-radius:var(--r-sm);font-size:13.5px;font-weight:600;display:inline-flex;
+    align-items:center;gap:7px;transition:.15s;white-space:nowrap}
+  .btn:hover{border-color:var(--primary);color:var(--primary)}
+  .btn.primary{background:var(--primary);border-color:var(--primary);color:#fff}
+  .btn.primary:hover{background:var(--primary-deep);border-color:var(--primary-deep);color:#fff}
+  .btn svg{width:16px;height:16px}
+  .btn.ghost{border-color:transparent;background:transparent;padding:8px}
+  .btn:disabled{opacity:.55;cursor:default}
+
+  .demo-banner{display:flex;align-items:center;gap:10px;background:var(--gold-soft);border:1px solid var(--gold);
+    color:var(--ink);padding:10px 14px;border-radius:var(--r-sm);font-size:13px;margin-bottom:18px}
+  .demo-banner b{color:var(--gold)}
+  .demo-banner button{margin-left:auto}
+
+  .kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:16px}
+  .kpi{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px;box-shadow:var(--shadow)}
+  .kpi .lbl{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:600;display:flex;align-items:center;gap:6px}
+  .kpi .val{font-family:"Archivo";font-weight:700;font-size:25px;margin-top:6px;line-height:1}
+  .kpi .sub{font-size:11.5px;color:var(--faint);margin-top:5px}
+  .kpi.accent{background:linear-gradient(150deg,var(--primary),var(--primary-deep));border-color:transparent;color:#fff}
+  .kpi.accent .lbl,.kpi.accent .sub{color:rgba(255,255,255,.8)}
+  .dot{width:8px;height:8px;border-radius:50%;flex:none}
+
+  .grid2{display:grid;grid-template-columns:1.15fr .85fr;gap:16px;margin-bottom:16px}
+  .panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px 18px;box-shadow:var(--shadow)}
+  .panel h2{font-size:14px;font-weight:600;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between}
+  .panel h2 span{font-size:11px;color:var(--muted);font-weight:500}
+
+  .funnel{display:flex;flex-direction:column;gap:9px}
+  .frow{display:grid;grid-template-columns:110px 1fr auto;align-items:center;gap:10px;font-size:13px}
+  .frow .name{color:var(--muted);font-weight:500}
+  .track{height:22px;background:var(--surface-2);border-radius:6px;overflow:hidden;border:1px solid var(--border)}
+  .fill{height:100%;border-radius:5px 0 0 5px;min-width:2px;transition:width .5s cubic-bezier(.2,.8,.2,1)}
+  .frow .amt{font-weight:600;font-size:12.5px}
+
+  .scoredist{display:flex;flex-direction:column;gap:12px}
+  .sline{display:flex;align-items:center;gap:10px}
+  .sbadge{font-size:12px;font-weight:600;padding:3px 10px;border-radius:99px;display:inline-flex;align-items:center;gap:6px}
+  .sbar{flex:1;height:8px;background:var(--surface-2);border-radius:99px;overflow:hidden}
+  .sbar > i{display:block;height:100%;border-radius:99px}
+  .scount{font-weight:700;font-family:"IBM Plex Mono";font-size:13px;min-width:22px;text-align:right}
+
+  .toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+  .search{position:relative;flex:1;min-width:200px}
+  .search svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);width:16px;height:16px;color:var(--faint)}
+  .search input{width:100%;padding:9px 12px 9px 34px;border:1px solid var(--border-strong);border-radius:var(--r-sm);background:var(--surface)}
+  select.filter{padding:9px 12px;border:1px solid var(--border-strong);border-radius:var(--r-sm);background:var(--surface);font-weight:500}
+
+  .tablewrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden}
+  .scroller{overflow-x:auto}
+  table{width:100%;border-collapse:collapse;min-width:760px}
+  th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);
+    font-weight:600;padding:12px 14px;border-bottom:1px solid var(--border);background:var(--surface-2);white-space:nowrap}
+  td{padding:13px 14px;border-bottom:1px solid var(--border);font-size:13.5px;vertical-align:middle}
+  tbody tr{cursor:pointer;transition:background .12s}
+  tbody tr:hover{background:var(--surface-2)}
+  tbody tr:last-child td{border-bottom:none}
+  .cname{font-weight:600}
+  .ccompany{font-size:12px;color:var(--muted);margin-top:1px}
+  .pill{font-size:11.5px;font-weight:600;padding:3px 9px;border-radius:99px;white-space:nowrap;display:inline-flex;align-items:center;gap:5px}
+  .demo-tag{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--gold);
+    border:1px solid var(--gold);border-radius:4px;padding:1px 5px;margin-left:6px;vertical-align:middle}
+  .empty{padding:56px 20px;text-align:center;color:var(--muted)}
+  .empty svg{width:40px;height:40px;color:var(--faint);margin-bottom:10px}
+  .empty h3{font-size:16px;margin-bottom:6px;color:var(--ink)}
+
+  .scrim{position:fixed;inset:0;background:rgba(20,30,27,.42);backdrop-filter:blur(2px);z-index:40;opacity:0;
+    pointer-events:none;transition:opacity .2s}
+  .scrim.show{opacity:1;pointer-events:auto}
+  .drawer{position:fixed;top:0;right:0;height:100%;width:min(520px,100%);background:var(--surface);z-index:50;
+    box-shadow:var(--shadow-lg);transform:translateX(100%);transition:transform .26s cubic-bezier(.3,.8,.3,1);
+    display:flex;flex-direction:column;overflow:hidden}
+  .drawer.show{transform:translateX(0)}
+  .dhead{padding:18px 22px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;gap:12px}
+  .dhead h2{font-size:19px;font-weight:700}
+  .dhead .sub{font-size:13px;color:var(--muted);margin-top:2px}
+  .dbody{padding:20px 22px;overflow-y:auto;flex:1}
+  .dfoot{padding:14px 22px;border-top:1px solid var(--border);display:flex;gap:10px;background:var(--surface-2)}
+
+  .field{margin-bottom:14px}
+  .field label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:5px}
+  .field input,.field select,.field textarea{width:100%;padding:9px 11px;border:1px solid var(--border-strong);
+    border-radius:var(--r-sm);background:var(--surface)}
+  .field textarea{resize:vertical;min-height:64px;line-height:1.45}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  fieldset{border:1px solid var(--border);border-radius:var(--r-sm);padding:12px 14px 4px;margin:0 0 14px}
+  legend{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--primary);padding:0 6px}
+  .commission-out{background:var(--primary-soft);border-radius:var(--r-sm);padding:10px 12px;font-size:13px;
+    display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
+  .commission-out b{font-family:"IBM Plex Mono";font-size:16px;color:var(--primary)}
+
+  .dsection{margin-bottom:22px}
+  .dsection h3{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);
+    font-weight:700;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+  .kv{display:grid;grid-template-columns:120px 1fr;gap:6px 12px;font-size:13.5px}
+  .kv dt{color:var(--muted)}
+  .kv dd{margin:0;font-weight:500}
+  .kv a{color:var(--primary);text-decoration:none}
+  .kv a:hover{text-decoration:underline}
+  .comments-box{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r-sm);
+    padding:11px 13px;font-size:13.5px;line-height:1.55;white-space:pre-wrap}
+  .money-tiles{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .mtile{border:1px solid var(--border);border-radius:var(--r-sm);padding:11px 13px}
+  .mtile .l{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;font-weight:600}
+  .mtile .v{font-family:"Archivo";font-weight:700;font-size:20px;margin-top:4px}
+
+  .fu-add{display:flex;flex-direction:column;gap:8px;background:var(--surface-2);border:1px dashed var(--border-strong);
+    border-radius:var(--r-sm);padding:12px;margin-bottom:14px}
+  .fu-list{display:flex;flex-direction:column;gap:0;position:relative}
+  .fu{position:relative;padding:0 0 16px 22px;border-left:2px solid var(--border);margin-left:5px}
+  .fu:last-child{border-left-color:transparent;padding-bottom:0}
+  .fu::before{content:"";position:absolute;left:-6px;top:2px;width:10px;height:10px;border-radius:50%;
+    background:var(--primary);border:2px solid var(--surface)}
+  .fu .date{font-size:11.5px;font-weight:700;color:var(--primary);font-family:"IBM Plex Mono"}
+  .fu .note{font-size:13.5px;margin:3px 0}
+  .fu .next{font-size:12px;color:var(--muted)}
+  .fu .next b{color:var(--gold)}
+  .fu-empty{font-size:13px;color:var(--faint);font-style:italic;padding:4px 0}
+  .next-flag{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:600}
+  .overdue{color:var(--hot)}
+  .soon{color:var(--warm)}
+  .del-link{color:var(--hot);background:none;border:none;font-size:12.5px;font-weight:600;padding:6px 4px}
+
+  .toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(120%);background:var(--ink);
+    color:var(--bg);padding:11px 18px;border-radius:var(--r-sm);font-size:13.5px;font-weight:500;z-index:80;
+    transition:transform .3s cubic-bezier(.2,.9,.2,1);box-shadow:var(--shadow-lg)}
+  .toast.show{transform:translateX(-50%) translateY(0)}
+
+  /* Login / setup */
+  .gate{position:fixed;inset:0;z-index:90;background:var(--bg);display:grid;place-items:center;padding:20px}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:16px;box-shadow:var(--shadow-lg);
+    width:min(400px,100%);padding:30px 28px}
+  .card .logo{margin:0 auto 16px}
+  .card h2{font-size:22px;text-align:center;font-weight:700}
+  .card .lead{text-align:center;color:var(--muted);font-size:13.5px;margin:6px 0 22px}
+  .card .field label{font-size:12.5px}
+  .card .btn{width:100%;justify-content:center;margin-top:6px;padding:11px}
+  .gate-err{background:var(--hot-soft);color:var(--hot);border-radius:var(--r-sm);padding:10px 12px;font-size:13px;
+    margin-bottom:14px;font-weight:500}
+  .setup{width:min(560px,100%);text-align:left}
+  .setup code{font-family:"IBM Plex Mono";background:var(--surface-2);border:1px solid var(--border);
+    border-radius:6px;padding:2px 6px;font-size:12.5px}
+  .setup ol{padding-left:20px;line-height:1.7;font-size:14px}
+  .loading{display:grid;place-items:center;gap:12px;color:var(--muted);font-size:14px}
+  .spin{width:26px;height:26px;border:3px solid var(--border);border-top-color:var(--primary);border-radius:50%;
+    animation:sp 1s linear infinite}
+  @keyframes sp{to{transform:rotate(360deg)}}
+
+  @media (max-width:900px){.kpis{grid-template-columns:repeat(2,1fr)}.grid2{grid-template-columns:1fr}}
+  @media (max-width:560px){.wrap{padding:16px 14px 70px}.kpis{grid-template-columns:1fr 1fr}.brand p{display:none}}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}.spin{animation:none}}
+</style>
+</head>
+<body>
+
+<!-- Pantalla de carga / login / setup -->
+<div class="gate" id="gate">
+  <div class="loading" id="gateLoading"><div class="spin"></div><span>Cargando…</span></div>
+</div>
+
+<!-- App -->
+<div class="wrap" id="app" hidden>
+  <div class="top">
+    <div class="brand">
+      <div class="logo">CR</div>
+      <div>
+        <h1 id="brandName">CRM de Ventas</h1>
+        <p>Clientes, seguimientos y comisiones en un solo lugar</p>
+      </div>
+    </div>
+    <span id="userChip" style="font-size:12.5px;color:var(--muted)"></span>
+    <button class="btn ghost" id="themeBtn" title="Cambiar tema"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></button>
+    <button class="btn" id="exportBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>Exportar</button>
+    <button class="btn" id="logoutBtn">Salir</button>
+    <button class="btn primary" id="addBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg>Nuevo cliente</button>
+  </div>
+
+  <div class="demo-banner" id="demoBanner" hidden>
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--gold);flex:none"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+    <span>Estás viendo <b>datos de ejemplo</b>. Agrega tu primer cliente y desaparecerán.</span>
+    <button class="btn" id="clearDemo">Empezar de cero</button>
+  </div>
+
+  <div class="kpis" id="kpis"></div>
+
+  <div class="grid2">
+    <div class="panel">
+      <h2>Embudo de ventas <span id="funnelSub"></span></h2>
+      <div class="funnel" id="funnel"></div>
+    </div>
+    <div class="panel">
+      <h2>Calificación de leads <span>por temperatura</span></h2>
+      <div class="scoredist" id="scoredist"></div>
+    </div>
+  </div>
+
+  <div class="toolbar">
+    <div class="search">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+      <input id="search" placeholder="Buscar por nombre, empresa, correo o tipo de negocio…">
+    </div>
+    <select class="filter" id="fEtapa"></select>
+    <select class="filter" id="fScore"></select>
+  </div>
+
+  <div class="tablewrap">
+    <div class="scroller">
+      <table>
+        <thead>
+          <tr>
+            <th>Cliente</th><th>Contacto</th><th>Tipo de negocio</th><th>Etapa</th>
+            <th>Lead</th><th>Valor est.</th><th>Comisión</th><th>Próximo seguimiento</th>
+          </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+    <div class="empty" id="emptyState" hidden>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      <h3>Sin resultados</h3>
+      <p>No hay clientes que coincidan. Ajusta los filtros o agrega uno nuevo.</p>
+    </div>
+  </div>
+</div>
+
+<div class="scrim" id="scrim"></div>
+<aside class="drawer" id="drawer" aria-hidden="true"></aside>
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.58.0/dist/umd/supabase.min.js"></script>
+<script src="config.js"></script>
+<script>
+/* ---------- Catálogos ---------- */
+const ETAPAS=[
+  {k:"nuevo",n:"Nuevo",c:"var(--cold)",s:"var(--cold-soft)"},
+  {k:"contactado",n:"Contactado",c:"var(--cold)",s:"var(--cold-soft)"},
+  {k:"propuesta",n:"Propuesta",c:"var(--gold)",s:"var(--gold-soft)"},
+  {k:"negociacion",n:"Negociación",c:"var(--warm)",s:"var(--warm-soft)"},
+  {k:"ganado",n:"Ganado",c:"var(--won)",s:"var(--primary-soft)"},
+  {k:"perdido",n:"Perdido",c:"var(--lost)",s:"var(--surface-2)"},
+];
+const SCORES=[
+  {k:"caliente",n:"Caliente",c:"var(--hot)",s:"var(--hot-soft)"},
+  {k:"tibio",n:"Tibio",c:"var(--warm)",s:"var(--warm-soft)"},
+  {k:"frio",n:"Frío",c:"var(--cold)",s:"var(--cold-soft)"},
+];
+const etapaMap=Object.fromEntries(ETAPAS.map(e=>[e.k,e]));
+const scoreMap=Object.fromEntries(SCORES.map(s=>[s.k,s]));
+const ACTIVAS=["nuevo","contactado","propuesta","negociacion"];
+const fmtMoney=n=>(n||0).toLocaleString("es-MX",{style:"currency",currency:"MXN",maximumFractionDigits:0});
+const todayStr=()=>new Date().toISOString().slice(0,10);
+const uid=()=>"c"+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+function comision(c){const v=Number(c.valorEstimado)||0,cv=Number(c.comisionValor)||0;return c.comisionTipo==="fija"?cv:v*cv/100;}
+
+const DEMO=[
+  {id:"demo1",_demo:true,nombre:"María Fernanda Ríos",empresa:"Agencia Sol y Mar",telefono:"322 111 2233",celular:"322 555 0101",correo:"mf.rios@solymar.mx",tipoNegocio:"Bloqueo de 20 habitaciones para grupo corporativo",etapa:"negociacion",leadScore:"caliente",valorEstimado:180000,comisionTipo:"porcentaje",comisionValor:10,comentarios:"Pide tarifa cerrada con desayunos. Decisión antes de fin de mes.",seguimientos:[{fecha:"2026-09-05",nota:"Envié propuesta con 3 escenarios de fechas.",proxAccion:"Llamar para cerrar bloqueo",proxFecha:"2026-09-12"}]},
+  {id:"demo2",_demo:true,nombre:"Jorge Villaseñor",empresa:"Bodas & Eventos PV",telefono:"",celular:"333 444 7788",correo:"jorge@bodaspv.com",tipoNegocio:"Paquete de boda 60 pax + hospedaje",etapa:"propuesta",leadScore:"tibio",valorEstimado:250000,comisionTipo:"porcentaje",comisionValor:8,comentarios:"Comparando con otro hotel. Sensible al precio del banquete.",seguimientos:[{fecha:"2026-09-08",nota:"Cotización enviada por WhatsApp.",proxAccion:"Dar seguimiento a la cotización",proxFecha:"2026-09-10"}]},
+  {id:"demo3",_demo:true,nombre:"Ana Gutiérrez",empresa:"Particular",telefono:"322 987 6543",celular:"",correo:"ana.g@gmail.com",tipoNegocio:"Escapada de aniversario, suite 3 noches",etapa:"ganado",leadScore:"caliente",valorEstimado:24000,comisionTipo:"fija",comisionValor:2500,comentarios:"Cliente recurrente, segunda reserva del año.",seguimientos:[{fecha:"2026-09-01",nota:"Reserva confirmada y pagada.",proxAccion:"Encuesta post-estancia",proxFecha:"2026-09-20"}]},
+  {id:"demo4",_demo:true,nombre:"Grupo Textil del Norte",empresa:"Grupo Textil del Norte",telefono:"81 2200 1100",celular:"",correo:"compras@gtn.mx",tipoNegocio:"Convención anual 120 asistentes",etapa:"contactado",leadScore:"frio",valorEstimado:600000,comisionTipo:"porcentaje",comisionValor:6,comentarios:"Primer contacto. Evento tentativo para el próximo año.",seguimientos:[]},
+];
+
+/* ---------- Estado ---------- */
+let sb=null, session=null, clients=[], isDemo=false;
+let filters={q:"",etapa:"",score:""}, editingId=null;
+const $=s=>document.querySelector(s);
+
+/* ---------- Arranque ---------- */
+applyTheme();
+const CFG=window.CRM_CONFIG||{};
+if(CFG.marca){$("#brandName").textContent=CFG.marca;}
+const configured = CFG.url && CFG.anonKey && !CFG.url.includes("PEGA_AQUI") && !CFG.anonKey.includes("PEGA_AQUI");
+
+if(!configured){
+  showSetup();
+}else{
+  sb = window.supabase.createClient(CFG.url, CFG.anonKey);
+  boot();
+}
+
+async function boot(){
+  const {data}=await sb.auth.getSession();
+  session=data.session;
+  sb.auth.onAuthStateChange((_e,s)=>{ session=s; s?enterApp():showLogin(); });
+  if(session) enterApp(); else showLogin();
+}
+
+/* ---------- Gate: setup / login ---------- */
+function showSetup(){
+  $("#gate").innerHTML=`<div class="card setup">
+    <div class="logo">CR</div>
+    <h2>Falta configurar la base</h2>
+    <p class="lead">Abre el archivo <code>config.js</code> y pega tu <b>Project URL</b> y tu <b>anon key</b> de Supabase.</p>
+    <ol>
+      <li>Entra a tu proyecto en <b>supabase.com</b>.</li>
+      <li>Ve a <code>Project Settings → API</code>.</li>
+      <li>Copia <b>Project URL</b> y <b>anon public</b> en <code>config.js</code>.</li>
+      <li>Vuelve a subir los archivos y recarga.</li>
+    </ol>
+    <p class="lead" style="margin-top:18px">Consulta <code>GUIA-DESPLIEGUE.md</code> para el paso a paso.</p>
+  </div>`;
+}
+
+function showLogin(err){
+  $("#app").hidden=true; $("#gate").hidden=false;
+  $("#gate").innerHTML=`<div class="card">
+    <div class="logo">CR</div>
+    <h2>${CFG.marca||"CRM de Ventas"}</h2>
+    <p class="lead">Inicia sesión para acceder al CRM del equipo</p>
+    ${err?`<div class="gate-err">${esc(err)}</div>`:""}
+    <div class="field"><label>Correo</label><input id="li_email" type="email" autocomplete="username" placeholder="tucorreo@empresa.com"></div>
+    <div class="field"><label>Contraseña</label><input id="li_pass" type="password" autocomplete="current-password" placeholder="••••••••"></div>
+    <button class="btn primary" id="li_btn">Entrar</button>
+  </div>`;
+  $("#li_btn").onclick=doLogin;
+  $("#li_pass").addEventListener("keydown",e=>{if(e.key==="Enter")doLogin();});
+  $("#li_email").focus();
+}
+async function doLogin(){
+  const email=$("#li_email").value.trim(), password=$("#li_pass").value;
+  if(!email||!password){ showLogin("Escribe tu correo y contraseña."); return; }
+  const btn=$("#li_btn"); btn.disabled=true; btn.textContent="Entrando…";
+  const {error}=await sb.auth.signInWithPassword({email,password});
+  if(error){ showLogin(traduceError(error.message)); }
+  // onAuthStateChange se encarga de entrar
+}
+function traduceError(m){
+  if(/Invalid login/i.test(m)) return "Correo o contraseña incorrectos.";
+  if(/Email not confirmed/i.test(m)) return "Tu correo aún no está confirmado.";
+  return m;
+}
+
+async function enterApp(){
+  $("#gate").hidden=true; $("#app").hidden=false;
+  $("#userChip").textContent=session?.user?.email||"";
+  clients=DEMO.map(d=>({...d})); isDemo=true; render();
+  await loadClients();
+  subscribeRealtime();
+}
+
+/* ---------- Datos (Supabase) ---------- */
+async function loadClients(){
+  const {data,error}=await sb.from("clients").select("id,data").order("updated_at",{ascending:false});
+  if(error){ toast("No se pudieron cargar los datos"); return; }
+  if(data && data.length){ clients=data.map(r=>({id:r.id,...r.data})); isDemo=false; }
+  else { clients=DEMO.map(d=>({...d})); isDemo=true; }
+  render();
+}
+function strip(c){const{id,_demo,...rest}=c;return rest;}
+async function persist(c){
+  const {error}=await sb.from("clients").upsert({id:c.id,data:strip(c),updated_at:new Date().toISOString()});
+  if(error){ toast("Error al guardar: "+error.message); return false; }
+  return true;
+}
+async function removeRemote(id){
+  const {error}=await sb.from("clients").delete().eq("id",id);
+  if(error) toast("Error al eliminar: "+error.message);
+}
+let rtChannel=null;
+function subscribeRealtime(){
+  if(rtChannel) return;
+  rtChannel=sb.channel("clients-rt")
+    .on("postgres_changes",{event:"*",schema:"public",table:"clients"},()=>{ if(!editingId) loadClients(); })
+    .subscribe();
+}
+
+/* ---------- Render ---------- */
+function render(){
+  $("#demoBanner").hidden=!isDemo;
+  renderKpis();renderFunnel();renderScores();renderFilters();renderRows();
+}
+function renderKpis(){
+  const total=clients.length;
+  const activos=clients.filter(c=>ACTIVAS.includes(c.etapa));
+  const pipeline=activos.reduce((s,c)=>s+(Number(c.valorEstimado)||0),0);
+  const comProj=activos.reduce((s,c)=>s+comision(c),0);
+  const comGan=clients.filter(c=>c.etapa==="ganado").reduce((s,c)=>s+comision(c),0);
+  const ganados=clients.filter(c=>c.etapa==="ganado").length;
+  const pend=pendientes();
+  const items=[
+    {lbl:"Clientes",val:total,sub:`${activos.length} en pipeline activo`},
+    {lbl:"Valor en pipeline",val:fmtMoney(pipeline),sub:"oportunidades abiertas"},
+    {lbl:"Comisión proyectada",val:fmtMoney(comProj),sub:"si cierras lo abierto",accent:true},
+    {lbl:"Comisión ganada",val:fmtMoney(comGan),sub:`${ganados} negocios cerrados`},
+    {lbl:"Seguimientos hoy",val:pend.length,sub:pend.filter(p=>p.overdue).length?`${pend.filter(p=>p.overdue).length} vencidos`:"al día",dot:pend.filter(p=>p.overdue).length?"var(--hot)":"var(--won)"},
+  ];
+  $("#kpis").innerHTML=items.map(i=>`
+    <div class="kpi${i.accent?' accent':''}">
+      <div class="lbl">${i.dot?`<span class="dot" style="background:${i.dot}"></span>`:''}${i.lbl}</div>
+      <div class="val ${typeof i.val==='string'&&i.val.includes('$')?'mono':''}">${i.val}</div>
+      <div class="sub">${i.sub}</div>
+    </div>`).join("");
+}
+function pendientes(){
+  const t=todayStr(),out=[];
+  clients.forEach(c=>{const n=nextFollowup(c);if(n&&n.proxFecha)out.push({fecha:n.proxFecha,overdue:n.proxFecha<t});});
+  return out;
+}
+function nextFollowup(c){
+  const w=(c.seguimientos||[]).filter(s=>s.proxFecha);
+  if(!w.length)return null;
+  return w.sort((a,b)=>a.proxFecha.localeCompare(b.proxFecha))[0];
+}
+function renderFunnel(){
+  const counts={},vals={};
+  ETAPAS.forEach(e=>{counts[e.k]=0;vals[e.k]=0});
+  clients.forEach(c=>{counts[c.etapa]=(counts[c.etapa]||0)+1;vals[c.etapa]=(vals[c.etapa]||0)+(Number(c.valorEstimado)||0);});
+  const max=Math.max(1,...ETAPAS.map(e=>counts[e.k]));
+  $("#funnelSub").textContent=`${clients.length} clientes`;
+  $("#funnel").innerHTML=ETAPAS.map(e=>`
+    <div class="frow"><div class="name">${e.n}</div>
+      <div class="track"><div class="fill" style="width:${counts[e.k]/max*100}%;background:${e.c}"></div></div>
+      <div class="amt mono">${counts[e.k]} · ${fmtMoney(vals[e.k])}</div></div>`).join("");
+}
+function renderScores(){
+  const counts={caliente:0,tibio:0,frio:0};
+  clients.forEach(c=>counts[c.leadScore]=(counts[c.leadScore]||0)+1);
+  const total=Math.max(1,clients.length);
+  $("#scoredist").innerHTML=SCORES.map(s=>`
+    <div class="sline"><span class="sbadge" style="background:${s.s};color:${s.c}"><span class="dot" style="background:${s.c}"></span>${s.n}</span>
+      <div class="sbar"><i style="width:${counts[s.k]/total*100}%;background:${s.c}"></i></div>
+      <span class="scount">${counts[s.k]}</span></div>`).join("");
+}
+function renderFilters(){
+  const fe=$("#fEtapa"),fs=$("#fScore");
+  if(!fe.dataset.built){
+    fe.innerHTML=`<option value="">Todas las etapas</option>`+ETAPAS.map(e=>`<option value="${e.k}">${e.n}</option>`).join("");
+    fs.innerHTML=`<option value="">Toda calificación</option>`+SCORES.map(s=>`<option value="${s.k}">${s.n}</option>`).join("");
+    fe.dataset.built=fs.dataset.built="1";
+  }
+}
+function matchesFilter(c){
+  if(filters.etapa&&c.etapa!==filters.etapa)return false;
+  if(filters.score&&c.leadScore!==filters.score)return false;
+  if(filters.q){const q=filters.q.toLowerCase();const hay=[c.nombre,c.empresa,c.correo,c.tipoNegocio,c.telefono,c.celular].join(" ").toLowerCase();if(!hay.includes(q))return false;}
+  return true;
+}
+function renderRows(){
+  const list=clients.filter(matchesFilter).sort((a,b)=>{
+    const oa=ACTIVAS.includes(a.etapa)?0:1,ob=ACTIVAS.includes(b.etapa)?0:1;
+    if(oa!==ob)return oa-ob;
+    return (Number(b.valorEstimado)||0)-(Number(a.valorEstimado)||0);
+  });
+  const tbody=$("#rows"),empty=$("#emptyState");
+  if(!list.length){tbody.innerHTML="";empty.hidden=false;return;}
+  empty.hidden=true;
+  const t=todayStr();
+  tbody.innerHTML=list.map(c=>{
+    const e=etapaMap[c.etapa]||ETAPAS[0],s=scoreMap[c.leadScore]||SCORES[2],nf=nextFollowup(c);
+    let nextCell='<span style="color:var(--faint)">—</span>';
+    if(nf){
+      const overdue=nf.proxFecha<t,soon=!overdue&&daysBetween(t,nf.proxFecha)<=3;
+      const cls=overdue?'overdue':(soon?'soon':''),ic=overdue?'⚠':'→';
+      nextCell=`<span class="next-flag ${cls}">${ic} <span class="mono">${fmtDate(nf.proxFecha)}</span></span><div class="ccompany">${esc(nf.proxAccion||'')}</div>`;
+    }
+    return `<tr data-id="${c.id}">
+      <td><div class="cname">${esc(c.nombre)||'—'}${c._demo?'<span class="demo-tag">ejemplo</span>':''}</div><div class="ccompany">${esc(c.empresa)||''}</div></td>
+      <td>${c.celular?`<div class="mono" style="font-size:12.5px">${esc(c.celular)}</div>`:''}${c.correo?`<div class="ccompany">${esc(c.correo)}</div>`:(!c.celular?'<span style="color:var(--faint)">—</span>':'')}</td>
+      <td style="max-width:200px">${esc(c.tipoNegocio)||'<span style="color:var(--faint)">—</span>'}</td>
+      <td><span class="pill" style="background:${e.s};color:${e.c}">${e.n}</span></td>
+      <td><span class="pill" style="background:${s.s};color:${s.c}"><span class="dot" style="background:${s.c}"></span>${s.n}</span></td>
+      <td class="mono">${fmtMoney(Number(c.valorEstimado)||0)}</td>
+      <td class="mono" style="color:var(--primary);font-weight:600">${fmtMoney(comision(c))}</td>
+      <td>${nextCell}</td></tr>`;
+  }).join("");
+  tbody.querySelectorAll("tr").forEach(tr=>tr.onclick=()=>openDetail(tr.dataset.id));
+}
+
+/* ---------- Utils ---------- */
+function esc(s){return (s==null?'':String(s)).replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));}
+function fmtDate(d){if(!d)return'';const[y,m,day]=d.split("-");return `${day}/${m}/${y.slice(2)}`;}
+function daysBetween(a,b){return Math.round((new Date(b)-new Date(a))/864e5);}
+
+/* ---------- Detalle ---------- */
+function openDetail(id){
+  const c=clients.find(x=>x.id===id);if(!c)return;
+  const e=etapaMap[c.etapa]||ETAPAS[0],s=scoreMap[c.leadScore]||SCORES[2];
+  const segs=(c.seguimientos||[]).slice().sort((a,b)=>(b.fecha||'').localeCompare(a.fecha||''));
+  const comLabel=c.comisionTipo==="fija"?"Fija":`${c.comisionValor||0}%`;
+  $("#drawer").innerHTML=`
+    <div class="dhead"><div style="flex:1">
+      <h2>${esc(c.nombre)||'Cliente'}</h2>
+      <div class="sub">${esc(c.empresa)||'Sin empresa'}${c._demo?' · <span style="color:var(--gold);font-weight:600">ejemplo</span>':''}</div>
+      <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">
+        <span class="pill" style="background:${e.s};color:${e.c}">${e.n}</span>
+        <span class="pill" style="background:${s.s};color:${s.c}"><span class="dot" style="background:${s.c}"></span>${s.n}</span></div></div>
+      <button class="btn ghost" id="closeDrawer" aria-label="Cerrar"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
+    <div class="dbody">
+      <div class="dsection"><div class="money-tiles">
+        <div class="mtile"><div class="l">Valor estimado</div><div class="v mono">${fmtMoney(Number(c.valorEstimado)||0)}</div></div>
+        <div class="mtile"><div class="l">Comisión (${comLabel})</div><div class="v mono" style="color:var(--primary)">${fmtMoney(comision(c))}</div></div></div></div>
+      <div class="dsection"><h3>Datos de contacto</h3><dl class="kv">
+        <dt>Teléfono</dt><dd>${c.telefono?`<a href="tel:${esc(c.telefono)}">${esc(c.telefono)}</a>`:'—'}</dd>
+        <dt>Celular</dt><dd>${c.celular?`<a href="tel:${esc(c.celular)}">${esc(c.celular)}</a>`:'—'}</dd>
+        <dt>Correo</dt><dd>${c.correo?`<a href="mailto:${esc(c.correo)}">${esc(c.correo)}</a>`:'—'}</dd>
+        <dt>Tipo de negocio</dt><dd>${esc(c.tipoNegocio)||'—'}</dd></dl></div>
+      ${c.comentarios?`<div class="dsection"><h3>Comentarios generales</h3><div class="comments-box">${esc(c.comentarios)}</div></div>`:''}
+      <div class="dsection"><h3>Seguimientos</h3>
+        <div class="fu-add">
+          <input type="date" id="fuFecha" value="${todayStr()}">
+          <textarea id="fuNota" placeholder="¿Qué pasó en este contacto?" style="min-height:52px"></textarea>
+          <div class="row2"><input id="fuAccion" placeholder="Próxima acción"><input type="date" id="fuProx"></div>
+          <button class="btn primary" id="fuAdd" style="align-self:flex-start">Registrar seguimiento</button></div>
+        <div class="fu-list" id="fuList">${renderFollowups(segs)}</div></div></div>
+    <div class="dfoot">
+      <button class="btn primary" id="editBtn" style="flex:1;justify-content:center">Editar cliente</button>
+      <button class="btn del-link" id="deleteBtn">Eliminar</button></div>`;
+  openDrawer();
+  $("#closeDrawer").onclick=closeDrawer;
+  $("#editBtn").onclick=()=>openForm(c.id);
+  $("#deleteBtn").onclick=()=>doDelete(c.id);
+  $("#fuAdd").onclick=()=>addFollowup(c.id);
+}
+function renderFollowups(segs){
+  if(!segs.length)return `<div class="fu-empty">Aún no hay seguimientos registrados.</div>`;
+  const t=todayStr();
+  return segs.map(s=>{
+    let next='';
+    if(s.proxFecha){const overdue=s.proxFecha<t;next=`<div class="next">Próximo: <b>${esc(s.proxAccion)||'seguimiento'}</b> · <span class="${overdue?'overdue':''}" style="font-weight:600">${fmtDate(s.proxFecha)}</span></div>`;}
+    return `<div class="fu"><div class="date">${fmtDate(s.fecha)}</div><div class="note">${esc(s.nota)}</div>${next}</div>`;
+  }).join("");
+}
+async function addFollowup(id){
+  const c=clients.find(x=>x.id===id);if(!c)return;
+  const nota=$("#fuNota").value.trim();
+  if(!nota){toast("Escribe qué pasó en el contacto");return;}
+  if(c._demo)promoteDemo(c);
+  c.seguimientos=c.seguimientos||[];
+  c.seguimientos.push({fecha:$("#fuFecha").value||todayStr(),nota,proxAccion:$("#fuAccion").value.trim(),proxFecha:$("#fuProx").value||""});
+  c.updatedAt=Date.now();
+  if(await persist(c)){toast("Seguimiento registrado");render();openDetail(id);}
+}
+
+/* ---------- Formulario ---------- */
+function openForm(id){
+  editingId=id||null;
+  const c=id?clients.find(x=>x.id===id):blank();
+  $("#drawer").innerHTML=`
+    <div class="dhead"><div style="flex:1"><h2>${id?'Editar cliente':'Nuevo cliente'}</h2>
+      <div class="sub">${id?'Actualiza la información del cliente':'Registra un nuevo prospecto o cliente'}</div></div>
+      <button class="btn ghost" id="closeDrawer" aria-label="Cerrar"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
+    <div class="dbody">
+      <fieldset><legend>Contacto</legend>
+        <div class="field"><label>Nombre *</label><input id="f_nombre" value="${esc(c.nombre)}" placeholder="Nombre del cliente"></div>
+        <div class="field"><label>Empresa o compañía</label><input id="f_empresa" value="${esc(c.empresa)}" placeholder="Empresa (o «Particular»)"></div>
+        <div class="row2"><div class="field"><label>Teléfono</label><input id="f_telefono" value="${esc(c.telefono)}" placeholder="Fijo"></div>
+          <div class="field"><label>Celular</label><input id="f_celular" value="${esc(c.celular)}" placeholder="Móvil / WhatsApp"></div></div>
+        <div class="field"><label>Correo electrónico</label><input id="f_correo" type="email" value="${esc(c.correo)}" placeholder="correo@ejemplo.com"></div></fieldset>
+      <fieldset><legend>Negocio</legend>
+        <div class="field"><label>Tipo de negocio</label><input id="f_tipo" value="${esc(c.tipoNegocio)}" placeholder="Ej. bloqueo de grupo, boda, evento…"></div>
+        <div class="row2"><div class="field"><label>Etapa</label><select id="f_etapa">${ETAPAS.map(e=>`<option value="${e.k}"${c.etapa===e.k?' selected':''}>${e.n}</option>`).join("")}</select></div>
+          <div class="field"><label>Calificación del lead</label><select id="f_score">${SCORES.map(s=>`<option value="${s.k}"${c.leadScore===s.k?' selected':''}>${s.n}</option>`).join("")}</select></div></div>
+        <div class="field"><label>Valor estimado del negocio (MXN)</label><input id="f_valor" type="number" min="0" step="100" value="${c.valorEstimado||''}" placeholder="0"></div></fieldset>
+      <fieldset><legend>Comisión</legend>
+        <div class="row2"><div class="field"><label>Tipo</label><select id="f_comtipo"><option value="porcentaje"${c.comisionTipo!=='fija'?' selected':''}>Porcentaje (%)</option><option value="fija"${c.comisionTipo==='fija'?' selected':''}>Monto fijo (MXN)</option></select></div>
+          <div class="field"><label id="f_comlabel">Porcentaje</label><input id="f_comvalor" type="number" min="0" step="0.5" value="${c.comisionValor||''}" placeholder="0"></div></div>
+        <div class="commission-out"><span>Comisión calculada</span><b id="comPreview">$0</b></div></fieldset>
+      <fieldset><legend>Notas</legend>
+        <div class="field"><label>Comentarios generales</label><textarea id="f_comentarios" placeholder="Contexto, necesidades, objeciones, acuerdos…">${esc(c.comentarios)}</textarea></div></fieldset></div>
+    <div class="dfoot">
+      <button class="btn" id="cancelBtn" style="flex:1;justify-content:center">Cancelar</button>
+      <button class="btn primary" id="saveBtn" style="flex:1;justify-content:center">${id?'Guardar cambios':'Agregar cliente'}</button></div>`;
+  openDrawer();
+  $("#closeDrawer").onclick=closeDrawer;
+  $("#cancelBtn").onclick=()=>id?openDetail(id):closeDrawer();
+  $("#saveBtn").onclick=saveForm;
+  const upd=()=>{
+    const tipo=$("#f_comtipo").value;
+    $("#f_comlabel").textContent=tipo==="fija"?"Monto fijo (MXN)":"Porcentaje (%)";
+    $("#comPreview").textContent=fmtMoney(comision({valorEstimado:+$("#f_valor").value,comisionTipo:tipo,comisionValor:+$("#f_comvalor").value}));
+  };
+  ["f_comtipo","f_comvalor","f_valor"].forEach(k=>$("#"+k).addEventListener("input",upd));
+  $("#f_comtipo").addEventListener("change",upd);upd();
+}
+function blank(){return {id:uid(),nombre:"",empresa:"",telefono:"",celular:"",correo:"",tipoNegocio:"",etapa:"nuevo",leadScore:"tibio",valorEstimado:"",comisionTipo:"porcentaje",comisionValor:"",comentarios:"",seguimientos:[]};}
+async function saveForm(){
+  const nombre=$("#f_nombre").value.trim();
+  if(!nombre){toast("El nombre es obligatorio");$("#f_nombre").focus();return;}
+  let c=editingId?clients.find(x=>x.id===editingId):blank();
+  if(c._demo)promoteDemo(c);
+  Object.assign(c,{nombre,empresa:$("#f_empresa").value.trim(),telefono:$("#f_telefono").value.trim(),
+    celular:$("#f_celular").value.trim(),correo:$("#f_correo").value.trim(),tipoNegocio:$("#f_tipo").value.trim(),
+    etapa:$("#f_etapa").value,leadScore:$("#f_score").value,valorEstimado:+$("#f_valor").value||0,
+    comisionTipo:$("#f_comtipo").value,comisionValor:+$("#f_comvalor").value||0,comentarios:$("#f_comentarios").value.trim(),updatedAt:Date.now()});
+  if(!editingId){c.createdAt=Date.now();c.seguimientos=c.seguimientos||[];clients.push(c);clearDemosIfNeeded();}
+  if(await persist(c)){toast(editingId?"Cliente actualizado":"Cliente agregado");render();openDetail(c.id);}
+}
+async function doDelete(id){
+  const c=clients.find(x=>x.id===id);if(!c)return;
+  if(!confirm(`¿Eliminar a "${c.nombre||'este cliente'}"? Esta acción no se puede deshacer.`))return;
+  clients=clients.filter(x=>x.id!==id);
+  if(!c._demo)await removeRemote(id);
+  if(clients.length===0){clients=DEMO.map(d=>({...d}));isDemo=true;}
+  closeDrawer();toast("Cliente eliminado");render();
+}
+function clearDemosIfNeeded(){if(isDemo){clients=clients.filter(c=>!c._demo);isDemo=false;}}
+function promoteDemo(c){delete c._demo;isDemo=false;clients=clients.filter(x=>!x._demo||x.id===c.id);if(!c.createdAt)c.createdAt=Date.now();}
+
+/* ---------- Drawer ---------- */
+function openDrawer(){$("#scrim").classList.add("show");$("#drawer").classList.add("show");$("#drawer").setAttribute("aria-hidden","false");}
+function closeDrawer(){$("#scrim").classList.remove("show");$("#drawer").classList.remove("show");$("#drawer").setAttribute("aria-hidden","true");editingId=null;}
+
+/* ---------- Export CSV ---------- */
+function exportCSV(){
+  const rows=clients.filter(c=>!c._demo);
+  if(!rows.length){toast("No hay clientes para exportar");return;}
+  const cols=[["nombre","Nombre"],["empresa","Empresa"],["telefono","Teléfono"],["celular","Celular"],["correo","Correo"],["tipoNegocio","Tipo de negocio"],["etapa","Etapa"],["leadScore","Calificación"],["valorEstimado","Valor estimado"],["comisionTipo","Tipo comisión"],["comisionValor","Valor comisión"]];
+  const q=v=>`"${String(v==null?'':v).replace(/"/g,'""')}"`;
+  let csv=cols.map(c=>q(c[1])).concat([q("Comisión calculada"),q("Último seguimiento"),q("Próxima acción"),q("Próxima fecha"),q("Comentarios")]).join(",")+"\n";
+  rows.forEach(c=>{
+    const nf=nextFollowup(c),last=(c.seguimientos||[]).slice().sort((a,b)=>(b.fecha||'').localeCompare(a.fecha||''))[0];
+    csv+=cols.map(col=>q(c[col[0]])).concat([q(comision(c)),q(last?last.fecha+': '+last.nota:''),q(nf?nf.proxAccion:''),q(nf?nf.proxFecha:''),q(c.comentarios)]).join(",")+"\n";
+  });
+  const blob=new Blob(["﻿"+csv],{type:"text/csv;charset=utf-8"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=`crm_clientes_${todayStr()}.csv`;
+  document.body.appendChild(a);a.click();a.remove();toast("CSV exportado");
+}
+
+/* ---------- Toast / tema ---------- */
+let toastT;
+function toast(msg){const t=$("#toast");t.textContent=msg;t.classList.add("show");clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove("show"),2600);}
+function applyTheme(){let s;try{s=localStorage.getItem("crm_theme")}catch(e){}if(s)document.documentElement.setAttribute("data-theme",s);}
+
+/* ---------- Eventos ---------- */
+$("#themeBtn").onclick=()=>{
+  const cur=document.documentElement.getAttribute("data-theme");
+  const dark=cur?cur==="dark":matchMedia("(prefers-color-scheme: dark)").matches;
+  const next=dark?"light":"dark";
+  document.documentElement.setAttribute("data-theme",next);
+  try{localStorage.setItem("crm_theme",next)}catch(e){}
+};
+$("#addBtn").onclick=()=>openForm(null);
+$("#exportBtn").onclick=exportCSV;
+$("#logoutBtn").onclick=async()=>{await sb.auth.signOut();};
+$("#clearDemo").onclick=()=>{clients=[];isDemo=false;render();closeDrawer();};
+$("#scrim").onclick=closeDrawer;
+document.addEventListener("keydown",e=>{if(e.key==="Escape")closeDrawer();});
+$("#search").oninput=e=>{filters.q=e.target.value;renderRows();};
+$("#fEtapa").onchange=e=>{filters.etapa=e.target.value;renderRows();};
+$("#fScore").onchange=e=>{filters.score=e.target.value;renderRows();};
+</script>
+</body>
+</html>
