@@ -17,6 +17,11 @@ window.CRM_CONFIG = {
   // Nombre que se muestra arriba en la app (opcional)
   marca: "EMPOWERING SALES",
 
+  // Mensaje que se abre YA ESCRITO al dar clic en WhatsApp (opcional).
+  // Comodines: {nombre} = nombre del cliente · {agente} = tú · {hotel} = la marca.
+  // Déjalo en "" si prefieres abrir el chat vacío.
+  waPlantilla: "Hola {nombre}, le saluda {agente}. Gracias por su interés, con gusto le comparto la información.",
+
   // Agentes del equipo. El "email" DEBE ser el mismo con el que entran a la app
   // (el usuario que creaste en Supabase → Authentication → Users).
   // Agrega una línea por cada agente:
