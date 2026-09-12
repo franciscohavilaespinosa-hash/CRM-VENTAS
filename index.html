@@ -232,12 +232,14 @@
   .ag-side{display:flex;flex-direction:column;align-items:flex-end;gap:7px;flex:none}
   .ag-val{font-weight:600;font-size:13px;color:var(--primary)}
   .ag-btns{display:flex;gap:6px}
-  .ag-wa,.ag-open{display:inline-flex;align-items:center;gap:5px;padding:7px 11px;border-radius:8px;font-size:12.5px;
+  .ag-wa,.ag-open,.ag-done{display:inline-flex;align-items:center;gap:5px;padding:7px 11px;border-radius:8px;font-size:12.5px;
     font-weight:600;text-decoration:none;border:1px solid var(--border-strong);cursor:pointer;background:var(--surface);color:var(--ink)}
   .ag-wa{background:#25D366;border-color:#25D366;color:#04210F}
   .ag-wa svg{width:14px;height:14px}
   .ag-wa:hover{filter:brightness(1.06)}
   .ag-open:hover{border-color:var(--primary);color:var(--primary)}
+  .ag-done{color:var(--won)}
+  .ag-done:hover{border-color:var(--won);color:var(--won)}
   .timing-venc{background:var(--hot-soft);color:var(--hot)}
   .timing-hoy{background:var(--warm-soft);color:var(--warm)}
   @media (max-width:560px){.ag-note{max-width:200px}.ag-side .ag-val{display:none}}
@@ -527,16 +529,33 @@ async function enterApp(){
 
 /* ---------- Datos (Supabase) ---------- */
 async function loadClients(){
-  const {data,error}=await sb.from("clients").select("id,data").order("updated_at",{ascending:false});
+  const {data,error}=await sb.from("clients").select("id,data,updated_at").order("updated_at",{ascending:false});
   if(error){ toast("No se pudieron cargar los datos"); return; }
-  if(data && data.length){ clients=data.map(r=>({id:r.id,...r.data})); isDemo=false; }
+  if(data && data.length){ clients=data.map(r=>({id:r.id,_ver:r.updated_at,...r.data})); isDemo=false; }
   else { clients=DEMO.map(d=>({...d})); isDemo=true; }
   render();
 }
-function strip(c){const{id,_demo,...rest}=c;return rest;}
+function strip(c){const{id,_demo,_ver,...rest}=c;return rest;}
 async function persist(c){
-  const {error}=await sb.from("clients").upsert({id:c.id,data:strip(c),updated_at:new Date().toISOString()});
+  const body=strip(c), newTs=new Date().toISOString();
+  if(c._ver){
+    // Registro existente: solo guarda si nadie lo cambió desde que lo cargamos.
+    const {data,error}=await sb.from("clients")
+      .update({data:body,updated_at:newTs}).eq("id",c.id).eq("updated_at",c._ver).select("updated_at");
+    if(error){ toast("Error al guardar: "+error.message); return false; }
+    if(!data||!data.length){
+      toast("⚠️ Otro agente ya actualizó este cliente. Revisa los cambios y vuelve a guardar.");
+      await loadClients();
+      return false;
+    }
+    c._ver=data[0].updated_at;
+    return true;
+  }
+  // Registro nuevo.
+  const {data,error}=await sb.from("clients")
+    .insert({id:c.id,data:body,updated_at:newTs}).select("updated_at");
   if(error){ toast("Error al guardar: "+error.message); return false; }
+  c._ver=(data&&data[0])?data[0].updated_at:newTs;
   return true;
 }
 async function removeRemote(id){
@@ -597,13 +616,14 @@ function renderAgenda(){
       </div>
       <div class="ag-side">
         <div class="ag-val mono">${fmtMoney(Number(c.valorEstimado)||0)}</div>
-        <div class="ag-btns">${wa}<button class="ag-open" data-id="${c.id}">Abrir</button></div>
+        <div class="ag-btns">${wa}<button class="ag-open" data-id="${c.id}">Abrir</button><button class="ag-done" data-id="${c.id}" title="Cerrar este pendiente">✓ Atendido</button></div>
       </div>
     </div>`;
   }).join("");
   list.querySelectorAll(".ag-open").forEach(b=>b.onclick=e=>{e.stopPropagation();openDetail(b.dataset.id);});
+  list.querySelectorAll(".ag-done").forEach(b=>b.onclick=e=>{e.stopPropagation();markAttended(b.dataset.id);});
   list.querySelectorAll(".ag-wa").forEach(a=>a.addEventListener("click",()=>{openDetail(a.dataset.wa);prefillFollow("whatsapp");}));
-  list.querySelectorAll(".ag-row").forEach(r=>r.addEventListener("click",e=>{if(e.target.closest(".ag-wa")||e.target.closest(".ag-open"))return;openDetail(r.dataset.id);}));
+  list.querySelectorAll(".ag-row").forEach(r=>r.addEventListener("click",e=>{if(e.target.closest(".ag-btns"))return;openDetail(r.dataset.id);}));
 }
 function renderKpis(){
   const total=clients.length;
@@ -800,6 +820,15 @@ async function addFollowup(id){
   if(await persist(c)){toast("Seguimiento registrado");render();openDetail(id);}
 }
 
+async function markAttended(id){
+  const c=clients.find(x=>x.id===id);if(!c)return;
+  if(c._demo)promoteDemo(c);
+  c.seguimientos=c.seguimientos||[];
+  c.seguimientos.push({canal:"nota",fecha:todayStr(),hora:nowHM(),nota:"✓ Marcado como atendido",proxAccion:"",proxFecha:""});
+  c.updatedAt=Date.now();
+  if(await persist(c)){toast("Marcado como atendido");render();}
+}
+
 /* ---------- Formulario ---------- */
 function openForm(id){
   editingId=id||null;
@@ -875,10 +904,16 @@ function exportCSV(){
   if(!rows.length){toast("No hay clientes para exportar");return;}
   const cols=[["nombre","Nombre"],["empresa","Empresa"],["telefono","Teléfono"],["celular","Celular"],["correo","Correo"],["tipoNegocio","Tipo de negocio"],["etapa","Etapa"],["leadScore","Calificación"],["valorEstimado","Valor estimado"],["comisionTipo","Tipo comisión"],["comisionValor","Valor comisión"]];
   const q=v=>`"${String(v==null?'':v).replace(/"/g,'""')}"`;
-  let csv=cols.map(c=>q(c[1])).concat([q("Comisión calculada"),q("Último seguimiento"),q("Próxima acción"),q("Próxima fecha"),q("Comentarios")]).join(",")+"\n";
+  let csv=cols.map(c=>q(c[1])).concat([q("Comisión calculada"),q("Próxima acción"),q("Próxima fecha"),q("Nº seguimientos"),q("Bitácora completa"),q("Comentarios")]).join(",")+"\n";
   rows.forEach(c=>{
-    const nf=nextFollowup(c),last=(c.seguimientos||[]).slice().sort((a,b)=>(b.fecha||'').localeCompare(a.fecha||''))[0];
-    csv+=cols.map(col=>q(c[col[0]])).concat([q(comision(c)),q(last?last.fecha+': '+last.nota:''),q(nf?nf.proxAccion:''),q(nf?nf.proxFecha:''),q(c.comentarios)]).join(",")+"\n";
+    const nf=nextFollowup(c);
+    const segs=(c.seguimientos||[]).slice().sort((a,b)=>((a.fecha||'')+(a.hora||'')).localeCompare((b.fecha||'')+(b.hora||'')));
+    const bitacora=segs.map(s=>{
+      const canal=(CANALES[s.canal]||CANALES.nota).n;
+      const prox=s.proxFecha?` → ${s.proxAccion||'seguimiento'} (${s.proxFecha})`:'';
+      return `${s.fecha||''} ${s.hora||''} [${canal}] ${s.nota||''}${prox}`;
+    }).join("  ||  ");
+    csv+=cols.map(col=>q(c[col[0]])).concat([q(comision(c)),q(nf?nf.proxAccion:''),q(nf?nf.proxFecha:''),q(segs.length),q(bitacora),q(c.comentarios)]).join(",")+"\n";
   });
   const blob=new Blob(["﻿"+csv],{type:"text/csv;charset=utf-8"});
   const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=`crm_clientes_${todayStr()}.csv`;
