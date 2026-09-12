@@ -15,5 +15,14 @@ window.CRM_CONFIG = {
   anonKey: "sb_publishable_qkcFmuy3pP9vQffaOrlYkw_wKyzgw09",
 
   // Nombre que se muestra arriba en la app (opcional)
-  marca: "EMPOWERING SALES"
+  marca: "EMPOWERING SALES",
+
+  // Agentes del equipo. El "email" DEBE ser el mismo con el que entran a la app
+  // (el usuario que creaste en Supabase → Authentication → Users).
+  // Agrega una línea por cada agente:
+  agentes: [
+    { email: "francisco.h.avila.espinosa@gmail.com", nombre: "Francisco" }
+    // , { email: "agente2@correo.com", nombre: "María" }
+    // , { email: "agente3@correo.com", nombre: "Luis" }
+  ]
 };

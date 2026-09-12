@@ -242,6 +242,13 @@
   .ag-done:hover{border-color:var(--won);color:var(--won)}
   .timing-venc{background:var(--hot-soft);color:var(--hot)}
   .timing-hoy{background:var(--warm-soft);color:var(--warm)}
+  .ag-head-right{display:flex;align-items:center;gap:12px}
+  .ag-scope{display:inline-flex;border:1px solid var(--border-strong);border-radius:7px;overflow:hidden}
+  .ag-scope button{border:none;background:var(--surface);color:var(--muted);font-size:11.5px;font-weight:600;padding:4px 11px;cursor:pointer}
+  .ag-scope button.on{background:var(--primary);color:#1E1408}
+  .cresp{font-size:11px;color:var(--faint);margin-top:2px;display:flex;align-items:center;gap:4px}
+  .resp-line{margin-top:12px;font-size:12.5px;color:var(--muted);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .resp-select{padding:5px 9px;border:1px solid var(--border-strong);border-radius:7px;background:var(--surface);color:var(--ink);font-size:12.5px;font-weight:600}
   @media (max-width:560px){.ag-note{max-width:200px}.ag-side .ag-val{display:none}}
 
   .toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(120%);background:var(--ink);
@@ -332,7 +339,12 @@
   </div>
 
   <section class="panel agenda" id="agenda" hidden>
-    <h2>Agenda de hoy <span id="agendaCount"></span></h2>
+    <h2><span>Agenda de hoy</span>
+      <span class="ag-head-right">
+        <span id="agendaCount"></span>
+        <span class="ag-scope"><button id="agScopeMios" class="on">Míos</button><button id="agScopeTodos">Todos</button></span>
+      </span>
+    </h2>
     <div id="agendaList"></div>
   </section>
 
@@ -354,6 +366,7 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
       <input id="search" placeholder="Buscar por nombre, empresa, correo o tipo de negocio…">
     </div>
+    <select class="filter" id="fResp"></select>
     <select class="filter" id="fEtapa"></select>
     <select class="filter" id="fScore"></select>
   </div>
@@ -416,9 +429,27 @@ const DEMO=[
 ];
 
 /* ---------- Estado ---------- */
-let sb=null, session=null, clients=[], isDemo=false;
-let filters={q:"",etapa:"",score:""}, editingId=null;
+let sb=null, session=null, clients=[], isDemo=false, myEmail="", agendaScope="mios";
+let filters={q:"",etapa:"",score:"",resp:""}, editingId=null;
 const $=s=>document.querySelector(s);
+
+/* ---------- Agentes / responsable ---------- */
+function agentesLista(){
+  const list=(Array.isArray(window.CRM_CONFIG?.agentes)?window.CRM_CONFIG.agentes:[]).slice();
+  if(myEmail && !list.some(a=>a.email===myEmail)) list.unshift({email:myEmail,nombre:myEmail});
+  return list;
+}
+function agenteNombre(email){
+  if(!email) return "Sin asignar";
+  const a=agentesLista().find(x=>x.email===email);
+  return a?a.nombre:email;
+}
+function agentOptions(sel){
+  const list=agentesLista();
+  if(sel && !list.some(a=>a.email===sel)) list.push({email:sel,nombre:agenteNombre(sel)});
+  return `<option value=""${!sel?' selected':''}>Sin asignar</option>`+
+    list.map(a=>`<option value="${esc(a.email)}"${sel===a.email?' selected':''}>${esc(a.nombre)}</option>`).join("");
+}
 
 /* ---------- Contacto: WhatsApp / llamada ---------- */
 function isMobile(){return /Android|iPhone|iPad|iPod|Mobile|Opera Mini|IEMobile|BlackBerry/i.test(navigator.userAgent);}
@@ -521,7 +552,8 @@ function traduceError(m){
 
 async function enterApp(){
   $("#gate").hidden=true; $("#app").hidden=false;
-  $("#userChip").textContent=session?.user?.email||"";
+  myEmail=session?.user?.email||"";
+  $("#userChip").textContent=agenteNombre(myEmail);
   clients=DEMO.map(d=>({...d})); isDemo=true; render();
   await loadClients();
   subscribeRealtime();
@@ -589,6 +621,7 @@ function agendaItems(){
   clients.forEach(c=>{
     const nf=nextFollowup(c);
     if(!nf||!nf.proxFecha||nf.proxFecha>t) return;            // solo hoy o vencidos
+    if(agendaScope==="mios" && c.responsable && c.responsable!==myEmail) return; // míos + sin asignar
     const overdue=nf.proxFecha<t;
     arr.push({c,nf,overdue,daysOver:overdue?Math.max(1,daysBetween(nf.proxFecha,t)):0});
   });
@@ -686,14 +719,21 @@ function renderScores(){
       <span class="scount">${counts[s.k]}</span></div>`).join("");
 }
 function renderFilters(){
-  const fe=$("#fEtapa"),fs=$("#fScore");
+  const fe=$("#fEtapa"),fs=$("#fScore"),fr=$("#fResp");
   if(!fe.dataset.built){
     fe.innerHTML=`<option value="">Todas las etapas</option>`+ETAPAS.map(e=>`<option value="${e.k}">${e.n}</option>`).join("");
     fs.innerHTML=`<option value="">Toda calificación</option>`+SCORES.map(s=>`<option value="${s.k}">${s.n}</option>`).join("");
     fe.dataset.built=fs.dataset.built="1";
   }
+  // el filtro de responsable se reconstruye por si cambian los agentes
+  fr.innerHTML=`<option value="">Todos los responsables</option><option value="__me">Mis clientes</option><option value="__none">Sin asignar</option>`+
+    agentesLista().map(a=>`<option value="${esc(a.email)}">${esc(a.nombre)}</option>`).join("");
+  fr.value=filters.resp;
 }
 function matchesFilter(c){
+  if(filters.resp==="__me"){ if(c.responsable!==myEmail)return false; }
+  else if(filters.resp==="__none"){ if(c.responsable)return false; }
+  else if(filters.resp){ if(c.responsable!==filters.resp)return false; }
   if(filters.etapa&&c.etapa!==filters.etapa)return false;
   if(filters.score&&c.leadScore!==filters.score)return false;
   if(filters.q){const q=filters.q.toLowerCase();const hay=[c.nombre,c.empresa,c.correo,c.tipoNegocio,c.telefono,c.celular].join(" ").toLowerCase();if(!hay.includes(q))return false;}
@@ -718,7 +758,7 @@ function renderRows(){
       nextCell=`<span class="next-flag ${cls}">${ic} <span class="mono">${fmtDate(nf.proxFecha)}</span></span><div class="ccompany">${esc(nf.proxAccion||'')}</div>`;
     }
     return `<tr data-id="${c.id}">
-      <td><div class="cname">${esc(c.nombre)||'—'}${c._demo?'<span class="demo-tag">ejemplo</span>':''}</div><div class="ccompany">${esc(c.empresa)||''}</div></td>
+      <td><div class="cname">${esc(c.nombre)||'—'}${c._demo?'<span class="demo-tag">ejemplo</span>':''}</div><div class="ccompany">${esc(c.empresa)||''}</div><div class="cresp">👤 ${esc(agenteNombre(c.responsable))}</div></td>
       <td>${c.celular?`<div class="mono" style="font-size:12.5px">${esc(c.celular)}</div>`:''}${c.correo?`<div class="ccompany">${esc(c.correo)}</div>`:(!c.celular?'<span style="color:var(--faint)">—</span>':'')}</td>
       <td style="max-width:200px">${esc(c.tipoNegocio)||'<span style="color:var(--faint)">—</span>'}</td>
       <td><span class="pill" style="background:${e.s};color:${e.c}">${e.n}</span></td>
@@ -754,7 +794,8 @@ function openDetail(id){
       <div class="sub">${esc(c.empresa)||'Sin empresa'}${c._demo?' · <span style="color:var(--gold);font-weight:600">ejemplo</span>':''}</div>
       <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">
         <span class="pill" style="background:${e.s};color:${e.c}">${e.n}</span>
-        <span class="pill" style="background:${s.s};color:${s.c}"><span class="dot" style="background:${s.c}"></span>${s.n}</span></div></div>
+        <span class="pill" style="background:${s.s};color:${s.c}"><span class="dot" style="background:${s.c}"></span>${s.n}</span></div>
+        <div class="resp-line">Responsable: <select id="dResp" class="resp-select">${agentOptions(c.responsable)}</select></div></div>
       <button class="btn ghost" id="closeDrawer" aria-label="Cerrar"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
     <div class="dbody">
       ${actionsHtml}
@@ -788,6 +829,13 @@ function openDetail(id){
   $("#fuAdd").onclick=()=>addFollowup(c.id);
   const aw=$("#actWa");if(aw)aw.addEventListener("click",()=>prefillFollow("whatsapp"));
   const ac=$("#actCall");if(ac)ac.addEventListener("click",()=>prefillFollow("llamada"));
+  const dr=$("#dResp");if(dr)dr.onchange=()=>reassign(c.id,dr.value);
+}
+async function reassign(id,email){
+  const c=clients.find(x=>x.id===id);if(!c)return;
+  if(c._demo)promoteDemo(c);
+  c.responsable=email;c.updatedAt=Date.now();
+  if(await persist(c)){toast("Responsable: "+agenteNombre(email));render();}
 }
 function prefillFollow(canalKey){
   const sel=$("#fuCanal");if(sel)sel.value=canalKey;
@@ -848,7 +896,8 @@ function openForm(id){
         <div class="field"><label>Tipo de negocio</label><input id="f_tipo" value="${esc(c.tipoNegocio)}" placeholder="Ej. bloqueo de grupo, boda, evento…"></div>
         <div class="row2"><div class="field"><label>Etapa</label><select id="f_etapa">${ETAPAS.map(e=>`<option value="${e.k}"${c.etapa===e.k?' selected':''}>${e.n}</option>`).join("")}</select></div>
           <div class="field"><label>Calificación del lead</label><select id="f_score">${SCORES.map(s=>`<option value="${s.k}"${c.leadScore===s.k?' selected':''}>${s.n}</option>`).join("")}</select></div></div>
-        <div class="field"><label>Valor estimado del negocio (MXN)</label><input id="f_valor" type="number" min="0" step="100" value="${c.valorEstimado||''}" placeholder="0"></div></fieldset>
+        <div class="field"><label>Valor estimado del negocio (MXN)</label><input id="f_valor" type="number" min="0" step="100" value="${c.valorEstimado||''}" placeholder="0"></div>
+        <div class="field"><label>Responsable (agente)</label><select id="f_resp">${agentOptions(c.responsable)}</select></div></fieldset>
       <fieldset><legend>Comisión</legend>
         <div class="row2"><div class="field"><label>Tipo</label><select id="f_comtipo"><option value="porcentaje"${c.comisionTipo!=='fija'?' selected':''}>Porcentaje (%)</option><option value="fija"${c.comisionTipo==='fija'?' selected':''}>Monto fijo (MXN)</option></select></div>
           <div class="field"><label id="f_comlabel">Porcentaje</label><input id="f_comvalor" type="number" min="0" step="0.5" value="${c.comisionValor||''}" placeholder="0"></div></div>
@@ -870,7 +919,7 @@ function openForm(id){
   ["f_comtipo","f_comvalor","f_valor"].forEach(k=>$("#"+k).addEventListener("input",upd));
   $("#f_comtipo").addEventListener("change",upd);upd();
 }
-function blank(){return {id:uid(),nombre:"",empresa:"",telefono:"",celular:"",correo:"",tipoNegocio:"",etapa:"nuevo",leadScore:"tibio",valorEstimado:"",comisionTipo:"porcentaje",comisionValor:"",comentarios:"",seguimientos:[]};}
+function blank(){return {id:uid(),nombre:"",empresa:"",telefono:"",celular:"",correo:"",tipoNegocio:"",etapa:"nuevo",leadScore:"tibio",valorEstimado:"",comisionTipo:"porcentaje",comisionValor:"",comentarios:"",responsable:myEmail,seguimientos:[]};}
 async function saveForm(){
   const nombre=$("#f_nombre").value.trim();
   if(!nombre){toast("El nombre es obligatorio");$("#f_nombre").focus();return;}
@@ -879,7 +928,7 @@ async function saveForm(){
   Object.assign(c,{nombre,empresa:$("#f_empresa").value.trim(),telefono:$("#f_telefono").value.trim(),
     celular:$("#f_celular").value.trim(),correo:$("#f_correo").value.trim(),tipoNegocio:$("#f_tipo").value.trim(),
     etapa:$("#f_etapa").value,leadScore:$("#f_score").value,valorEstimado:+$("#f_valor").value||0,
-    comisionTipo:$("#f_comtipo").value,comisionValor:+$("#f_comvalor").value||0,comentarios:$("#f_comentarios").value.trim(),updatedAt:Date.now()});
+    comisionTipo:$("#f_comtipo").value,comisionValor:+$("#f_comvalor").value||0,comentarios:$("#f_comentarios").value.trim(),responsable:$("#f_resp").value,updatedAt:Date.now()});
   if(!editingId){c.createdAt=Date.now();c.seguimientos=c.seguimientos||[];clients.push(c);clearDemosIfNeeded();}
   if(await persist(c)){toast(editingId?"Cliente actualizado":"Cliente agregado");render();openDetail(c.id);}
 }
@@ -942,6 +991,10 @@ document.addEventListener("keydown",e=>{if(e.key==="Escape")closeDrawer();});
 $("#search").oninput=e=>{filters.q=e.target.value;renderRows();};
 $("#fEtapa").onchange=e=>{filters.etapa=e.target.value;renderRows();};
 $("#fScore").onchange=e=>{filters.score=e.target.value;renderRows();};
+$("#fResp").onchange=e=>{filters.resp=e.target.value;renderRows();};
+$("#agScopeMios").onclick=()=>setAgScope("mios");
+$("#agScopeTodos").onclick=()=>setAgScope("todos");
+function setAgScope(v){agendaScope=v;$("#agScopeMios").classList.toggle("on",v==="mios");$("#agScopeTodos").classList.toggle("on",v==="todos");renderAgenda();}
 </script>
 </body>
 </html>
