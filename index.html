@@ -186,11 +186,22 @@
   .fu:last-child{border-left-color:transparent;padding-bottom:0}
   .fu::before{content:"";position:absolute;left:-6px;top:2px;width:10px;height:10px;border-radius:50%;
     background:var(--primary);border:2px solid var(--surface)}
-  .fu .date{font-size:11.5px;font-weight:700;color:var(--primary);font-family:"IBM Plex Mono"}
+  .fu-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:3px}
+  .fu .date{font-size:11.5px;font-weight:600;color:var(--muted);font-family:"IBM Plex Mono"}
   .fu .note{font-size:13.5px;margin:3px 0}
   .fu .next{font-size:12px;color:var(--muted)}
   .fu .next b{color:var(--gold)}
   .fu-empty{font-size:13px;color:var(--faint);font-style:italic;padding:4px 0}
+  .canal-badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;padding:2px 9px;border-radius:99px;letter-spacing:.02em}
+  .canal-badge svg{width:12px;height:12px}
+  .canal-whatsapp{background:rgba(37,211,102,.16);color:#1FA855}
+  .canal-llamada{background:var(--primary-soft);color:var(--primary)}
+  .canal-correo{background:var(--cold-soft);color:var(--cold)}
+  .canal-presencial{background:var(--warm-soft);color:var(--warm)}
+  .canal-nota{background:var(--surface-2);color:var(--muted)}
+  .fu-meta{display:grid;grid-template-columns:1.15fr 1fr .8fr;gap:8px}
+  .fu-add select,.fu-add input,.fu-add textarea{width:100%;padding:8px 10px;border:1px solid var(--border-strong);
+    border-radius:8px;background:var(--surface);color:var(--ink);font-size:13.5px}
   .next-flag{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:600}
   .overdue{color:var(--hot)}
   .soon{color:var(--warm)}
@@ -206,6 +217,30 @@
   .act.call{background:var(--primary);border-color:var(--primary);color:#1E1408}
   .act.call:hover{filter:brightness(1.06)}
   .act.mail:hover{border-color:var(--primary);color:var(--primary)}
+
+  /* Agenda de hoy */
+  .agenda{margin-bottom:16px;border-color:var(--primary-deep);box-shadow:0 0 0 1px var(--primary-soft),var(--shadow)}
+  .ag-empty{color:var(--muted);font-size:13.5px;padding:4px 0}
+  .ag-row{display:flex;gap:14px;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--border);cursor:pointer}
+  .ag-row:last-child{border-bottom:none}
+  .ag-row:hover{background:var(--surface-2)}
+  .ag-main{min-width:0;flex:1}
+  .ag-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:3px}
+  .ag-name{font-weight:700;font-size:14px}
+  .ag-action{font-size:13.5px;font-weight:500}
+  .ag-note{font-size:12px;color:var(--muted);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:440px}
+  .ag-side{display:flex;flex-direction:column;align-items:flex-end;gap:7px;flex:none}
+  .ag-val{font-weight:600;font-size:13px;color:var(--primary)}
+  .ag-btns{display:flex;gap:6px}
+  .ag-wa,.ag-open{display:inline-flex;align-items:center;gap:5px;padding:7px 11px;border-radius:8px;font-size:12.5px;
+    font-weight:600;text-decoration:none;border:1px solid var(--border-strong);cursor:pointer;background:var(--surface);color:var(--ink)}
+  .ag-wa{background:#25D366;border-color:#25D366;color:#04210F}
+  .ag-wa svg{width:14px;height:14px}
+  .ag-wa:hover{filter:brightness(1.06)}
+  .ag-open:hover{border-color:var(--primary);color:var(--primary)}
+  .timing-venc{background:var(--hot-soft);color:var(--hot)}
+  .timing-hoy{background:var(--warm-soft);color:var(--warm)}
+  @media (max-width:560px){.ag-note{max-width:200px}.ag-side .ag-val{display:none}}
 
   .toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(120%);background:var(--ink);
     color:var(--bg);padding:11px 18px;border-radius:var(--r-sm);font-size:13.5px;font-weight:500;z-index:80;
@@ -294,6 +329,11 @@
     <button class="btn" id="clearDemo">Empezar de cero</button>
   </div>
 
+  <section class="panel agenda" id="agenda" hidden>
+    <h2>Agenda de hoy <span id="agendaCount"></span></h2>
+    <div id="agendaList"></div>
+  </section>
+
   <div class="kpis" id="kpis"></div>
 
   <div class="grid2">
@@ -362,6 +402,7 @@ const scoreMap=Object.fromEntries(SCORES.map(s=>[s.k,s]));
 const ACTIVAS=["nuevo","contactado","propuesta","negociacion"];
 const fmtMoney=n=>(n||0).toLocaleString("es-MX",{style:"currency",currency:"MXN",maximumFractionDigits:0});
 const todayStr=()=>new Date().toISOString().slice(0,10);
+const nowHM=()=>{const d=new Date();return String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0");};
 const uid=()=>"c"+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
 function comision(c){const v=Number(c.valorEstimado)||0,cv=Number(c.comisionValor)||0;return c.comisionTipo==="fija"?cv:v*cv/100;}
 
@@ -393,6 +434,13 @@ function waLink(num){
 const ICON_WA=`<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2a9.9 9.9 0 0 0-8.4 15.1L2 22l5.05-1.3A9.9 9.9 0 1 0 12.04 2Zm0 18a8 8 0 0 1-4.1-1.1l-.3-.2-3 .8.8-2.9-.2-.3A8 8 0 1 1 12.04 20Zm4.4-6c-.24-.12-1.4-.7-1.62-.78-.22-.08-.38-.12-.54.12-.16.24-.62.78-.76.94-.14.16-.28.18-.52.06a6.5 6.5 0 0 1-3.2-2.8c-.24-.42.24-.4.68-1.28.08-.16.04-.3-.02-.42-.06-.12-.54-1.32-.74-1.8-.2-.46-.4-.4-.54-.4h-.46c-.16 0-.42.06-.64.3-.22.24-.84.82-.84 2s.86 2.32.98 2.48c.12.16 1.7 2.6 4.12 3.64.58.25 1.03.4 1.38.51.58.18 1.1.16 1.52.1.46-.07 1.4-.57 1.6-1.13.2-.55.2-1.02.14-1.12-.06-.1-.22-.16-.46-.28Z"/></svg>`;
 const ICON_PHONE=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3-8.6A2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.3 1.8.6 2.6a2 2 0 0 1-.5 2.1L8 11.5a16 16 0 0 0 6 6l1.1-1.1a2 2 0 0 1 2.1-.5c.8.3 1.7.5 2.6.6a2 2 0 0 1 1.7 2Z"/></svg>`;
 const ICON_MAIL=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 6-10 7L2 6"/></svg>`;
+const CANALES={
+  whatsapp:{n:"WhatsApp",cls:"canal-whatsapp",ic:ICON_WA},
+  llamada:{n:"Llamada",cls:"canal-llamada",ic:ICON_PHONE},
+  correo:{n:"Correo",cls:"canal-correo",ic:ICON_MAIL},
+  presencial:{n:"Presencial",cls:"canal-presencial",ic:""},
+  nota:{n:"Nota",cls:"canal-nota",ic:""},
+};
 
 /* ---------- Arranque ---------- */
 applyTheme();
@@ -493,7 +541,8 @@ async function persist(c){
 }
 async function removeRemote(id){
   const {error}=await sb.from("clients").delete().eq("id",id);
-  if(error) toast("Error al eliminar: "+error.message);
+  if(error){ toast("Error al eliminar: "+error.message); return false; }
+  return true;
 }
 let rtChannel=null;
 function subscribeRealtime(){
@@ -506,7 +555,55 @@ function subscribeRealtime(){
 /* ---------- Render ---------- */
 function render(){
   $("#demoBanner").hidden=!isDemo;
-  renderKpis();renderFunnel();renderScores();renderFilters();renderRows();
+  renderAgenda();renderKpis();renderFunnel();renderScores();renderFilters();renderRows();
+}
+
+/* ---------- Agenda de hoy (vencidos + hoy, priorizados) ---------- */
+function agScore(it){
+  const leadW={caliente:3,tibio:2,frio:1}[it.c.leadScore]||1;
+  const urg=it.overdue?2:1;                                   // vencido pesa más que hoy
+  const valW=Math.min(3,(Number(it.c.valorEstimado)||0)/100000);
+  return urg*100 + Math.min(30,it.daysOver)*3 + leadW*10 + valW;
+}
+function agendaItems(){
+  const t=todayStr(),arr=[];
+  clients.forEach(c=>{
+    const nf=nextFollowup(c);
+    if(!nf||!nf.proxFecha||nf.proxFecha>t) return;            // solo hoy o vencidos
+    const overdue=nf.proxFecha<t;
+    arr.push({c,nf,overdue,daysOver:overdue?Math.max(1,daysBetween(nf.proxFecha,t)):0});
+  });
+  return arr.sort((a,b)=>agScore(b)-agScore(a));
+}
+function renderAgenda(){
+  const panel=$("#agenda"),list=$("#agendaList"),cnt=$("#agendaCount");
+  const items=agendaItems();
+  panel.hidden=false;
+  cnt.textContent=items.length?`${items.length} por atender`:"todo al día";
+  if(!items.length){ list.innerHTML=`<div class="ag-empty">✅ Sin seguimientos vencidos ni para hoy. Buen trabajo.</div>`; return; }
+  list.innerHTML=items.map(({c,nf,overdue,daysOver})=>{
+    const lead=scoreMap[c.leadScore]||SCORES[2];
+    const timing=overdue
+      ? `<span class="pill timing-venc">Vencido · ${daysOver} día${daysOver>1?'s':''}</span>`
+      : `<span class="pill timing-hoy">Para hoy</span>`;
+    const num=(c.celular||c.telefono||"").trim();
+    const wa=num?`<a class="ag-wa" href="${waLink(num)}" target="_blank" rel="noopener" data-wa="${c.id}">${ICON_WA}WhatsApp</a>`:"";
+    return `<div class="ag-row" data-id="${c.id}">
+      <div class="ag-main">
+        <div class="ag-top">${timing}<span class="ag-name">${esc(c.nombre)||'—'}</span>
+          <span class="pill" style="background:${lead.s};color:${lead.c}"><span class="dot" style="background:${lead.c}"></span>${lead.n}</span></div>
+        <div class="ag-action">${esc(nf.proxAccion)||'Dar seguimiento'}</div>
+        ${nf.nota?`<div class="ag-note">Última nota: ${esc(nf.nota)}</div>`:''}
+      </div>
+      <div class="ag-side">
+        <div class="ag-val mono">${fmtMoney(Number(c.valorEstimado)||0)}</div>
+        <div class="ag-btns">${wa}<button class="ag-open" data-id="${c.id}">Abrir</button></div>
+      </div>
+    </div>`;
+  }).join("");
+  list.querySelectorAll(".ag-open").forEach(b=>b.onclick=e=>{e.stopPropagation();openDetail(b.dataset.id);});
+  list.querySelectorAll(".ag-wa").forEach(a=>a.addEventListener("click",()=>{openDetail(a.dataset.wa);prefillFollow("whatsapp");}));
+  list.querySelectorAll(".ag-row").forEach(r=>r.addEventListener("click",e=>{if(e.target.closest(".ag-wa")||e.target.closest(".ag-open"))return;openDetail(r.dataset.id);}));
 }
 function renderKpis(){
   const total=clients.length;
@@ -516,12 +613,17 @@ function renderKpis(){
   const comGan=clients.filter(c=>c.etapa==="ganado").reduce((s,c)=>s+comision(c),0);
   const ganados=clients.filter(c=>c.etapa==="ganado").length;
   const pend=pendientes();
+  const venc=pend.filter(p=>p.overdue).length;
+  const hoy=pend.filter(p=>p.hoy).length;
+  const porAtender=venc+hoy;
+  const pendSub = porAtender===0 ? "al día"
+    : [venc?`${venc} vencidos`:"", hoy?`${hoy} hoy`:""].filter(Boolean).join(" · ");
   const items=[
     {lbl:"Clientes",val:total,sub:`${activos.length} en pipeline activo`},
     {lbl:"Valor en pipeline",val:fmtMoney(pipeline),sub:"oportunidades abiertas"},
     {lbl:"Comisión proyectada",val:fmtMoney(comProj),sub:"si cierras lo abierto",accent:true},
     {lbl:"Comisión ganada",val:fmtMoney(comGan),sub:`${ganados} negocios cerrados`},
-    {lbl:"Seguimientos hoy",val:pend.length,sub:pend.filter(p=>p.overdue).length?`${pend.filter(p=>p.overdue).length} vencidos`:"al día",dot:pend.filter(p=>p.overdue).length?"var(--hot)":"var(--won)"},
+    {lbl:"Por atender",val:porAtender,sub:pendSub,dot:venc?"var(--hot)":(hoy?"var(--warm)":"var(--won)")},
   ];
   $("#kpis").innerHTML=items.map(i=>`
     <div class="kpi${i.accent?' accent':''}">
@@ -532,13 +634,16 @@ function renderKpis(){
 }
 function pendientes(){
   const t=todayStr(),out=[];
-  clients.forEach(c=>{const n=nextFollowup(c);if(n&&n.proxFecha)out.push({fecha:n.proxFecha,overdue:n.proxFecha<t});});
+  clients.forEach(c=>{const n=nextFollowup(c);if(n&&n.proxFecha)out.push({proxFecha:n.proxFecha,overdue:n.proxFecha<t,hoy:n.proxFecha===t});});
   return out;
 }
 function nextFollowup(c){
-  const w=(c.seguimientos||[]).filter(s=>s.proxFecha);
-  if(!w.length)return null;
-  return w.sort((a,b)=>a.proxFecha.localeCompare(b.proxFecha))[0];
+  // La próxima acción la define el ÚLTIMO seguimiento registrado.
+  // Si el contacto más reciente no dejó próxima fecha, no hay pendiente
+  // (así un vencido se limpia al registrar un nuevo seguimiento).
+  const segs=(c.seguimientos||[]).slice().sort((a,b)=>((b.fecha||'')+(b.hora||'')).localeCompare((a.fecha||'')+(a.hora||'')));
+  const latest=segs[0];
+  return (latest && latest.proxFecha) ? latest : null;
 }
 function renderFunnel(){
   const counts={},vals={};
@@ -614,7 +719,7 @@ function daysBetween(a,b){return Math.round((new Date(b)-new Date(a))/864e5);}
 function openDetail(id){
   const c=clients.find(x=>x.id===id);if(!c)return;
   const e=etapaMap[c.etapa]||ETAPAS[0],s=scoreMap[c.leadScore]||SCORES[2];
-  const segs=(c.seguimientos||[]).slice().sort((a,b)=>(b.fecha||'').localeCompare(a.fecha||''));
+  const segs=(c.seguimientos||[]).slice().sort((a,b)=>((b.fecha||'')+(b.hora||'')).localeCompare((a.fecha||'')+(a.hora||'')));
   const comLabel=c.comisionTipo==="fija"?"Fija":`${c.comisionValor||0}%`;
   const waNum=(c.celular||c.telefono||"").trim();
   const callNum=(c.celular||c.telefono||"").replace(/[^\d+]/g,"");
@@ -644,8 +749,12 @@ function openDetail(id){
       ${c.comentarios?`<div class="dsection"><h3>Comentarios generales</h3><div class="comments-box">${esc(c.comentarios)}</div></div>`:''}
       <div class="dsection"><h3>Seguimientos</h3>
         <div class="fu-add">
-          <input type="date" id="fuFecha" value="${todayStr()}">
-          <textarea id="fuNota" placeholder="¿Qué pasó en este contacto?" style="min-height:52px"></textarea>
+          <div class="fu-meta">
+            <select id="fuCanal">${Object.entries(CANALES).map(([k,v])=>`<option value="${k}"${k==='nota'?' selected':''}>${v.n}</option>`).join("")}</select>
+            <input type="date" id="fuFecha" value="${todayStr()}">
+            <input type="time" id="fuHora" value="${nowHM()}">
+          </div>
+          <textarea id="fuNota" placeholder="¿Qué se habló en este contacto?" style="min-height:52px"></textarea>
           <div class="row2"><input id="fuAccion" placeholder="Próxima acción"><input type="date" id="fuProx"></div>
           <button class="btn primary" id="fuAdd" style="align-self:flex-start">Registrar seguimiento</button></div>
         <div class="fu-list" id="fuList">${renderFollowups(segs)}</div></div></div>
@@ -657,24 +766,27 @@ function openDetail(id){
   $("#editBtn").onclick=()=>openForm(c.id);
   $("#deleteBtn").onclick=()=>doDelete(c.id);
   $("#fuAdd").onclick=()=>addFollowup(c.id);
-  const aw=$("#actWa");if(aw)aw.addEventListener("click",()=>prefillFollow("WhatsApp"));
-  const ac=$("#actCall");if(ac)ac.addEventListener("click",()=>prefillFollow("Llamada"));
+  const aw=$("#actWa");if(aw)aw.addEventListener("click",()=>prefillFollow("whatsapp"));
+  const ac=$("#actCall");if(ac)ac.addEventListener("click",()=>prefillFollow("llamada"));
 }
-function prefillFollow(tipo){
-  const nota=$("#fuNota");if(!nota)return;
-  if(!nota.value.trim())nota.value=tipo+": ";
-  const fecha=$("#fuFecha");if(fecha&&!fecha.value)fecha.value=todayStr();
-  nota.focus();
-  const v=nota.value;nota.setSelectionRange(v.length,v.length);
+function prefillFollow(canalKey){
+  const sel=$("#fuCanal");if(sel)sel.value=canalKey;
+  const fecha=$("#fuFecha");if(fecha)fecha.value=todayStr();
+  const hora=$("#fuHora");if(hora)hora.value=nowHM();
+  const nota=$("#fuNota");if(nota)nota.focus();
   const box=document.querySelector(".fu-add");if(box)box.scrollIntoView({behavior:"smooth",block:"center"});
 }
 function renderFollowups(segs){
   if(!segs.length)return `<div class="fu-empty">Aún no hay seguimientos registrados.</div>`;
   const t=todayStr();
   return segs.map(s=>{
+    const canal=CANALES[s.canal]||CANALES.nota;
+    const cuando=fmtDate(s.fecha)+(s.hora?` · ${s.hora}`:"");
     let next='';
     if(s.proxFecha){const overdue=s.proxFecha<t;next=`<div class="next">Próximo: <b>${esc(s.proxAccion)||'seguimiento'}</b> · <span class="${overdue?'overdue':''}" style="font-weight:600">${fmtDate(s.proxFecha)}</span></div>`;}
-    return `<div class="fu"><div class="date">${fmtDate(s.fecha)}</div><div class="note">${esc(s.nota)}</div>${next}</div>`;
+    return `<div class="fu">
+      <div class="fu-top"><span class="canal-badge ${canal.cls}">${canal.ic}${canal.n}</span><span class="date">${cuando}</span></div>
+      <div class="note">${esc(s.nota)}</div>${next}</div>`;
   }).join("");
 }
 async function addFollowup(id){
@@ -683,7 +795,7 @@ async function addFollowup(id){
   if(!nota){toast("Escribe qué pasó en el contacto");return;}
   if(c._demo)promoteDemo(c);
   c.seguimientos=c.seguimientos||[];
-  c.seguimientos.push({fecha:$("#fuFecha").value||todayStr(),nota,proxAccion:$("#fuAccion").value.trim(),proxFecha:$("#fuProx").value||""});
+  c.seguimientos.push({canal:$("#fuCanal").value||"nota",fecha:$("#fuFecha").value||todayStr(),hora:$("#fuHora").value||nowHM(),nota,proxAccion:$("#fuAccion").value.trim(),proxFecha:$("#fuProx").value||""});
   c.updatedAt=Date.now();
   if(await persist(c)){toast("Seguimiento registrado");render();openDetail(id);}
 }
@@ -745,8 +857,8 @@ async function saveForm(){
 async function doDelete(id){
   const c=clients.find(x=>x.id===id);if(!c)return;
   if(!confirm(`¿Eliminar a "${c.nombre||'este cliente'}"? Esta acción no se puede deshacer.`))return;
+  if(!c._demo){ const ok=await removeRemote(id); if(!ok) return; } // si falló en la nube, no borramos en pantalla
   clients=clients.filter(x=>x.id!==id);
-  if(!c._demo)await removeRemote(id);
   if(clients.length===0){clients=DEMO.map(d=>({...d}));isDemo=true;}
   closeDrawer();toast("Cliente eliminado");render();
 }
